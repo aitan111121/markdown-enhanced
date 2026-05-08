@@ -70,4 +70,31 @@ describe("assertSafeConfig", () => {
 
     expect(() => assertSafeConfig(config)).toThrow("Crossnote HTML5 embeds must be disabled");
   });
+
+  it("rejects custom header and global CSS injection", () => {
+    const config = {
+      ...getSafeMarkdownConfig(),
+      crossnote: { ...getSafeMarkdownConfig().crossnote, includeInHeader: "<script></script>" }
+    };
+
+    expect(() => assertSafeConfig(config)).toThrow("custom header and global CSS");
+  });
+
+  it("rejects remote diagram services", () => {
+    const config = {
+      ...getSafeMarkdownConfig(),
+      crossnote: { ...getSafeMarkdownConfig().crossnote, krokiServer: "https://kroki.example" }
+    };
+
+    expect(() => assertSafeConfig(config)).toThrow("remote diagram services");
+  });
+
+  it("rejects file URL protocol support", () => {
+    const config = {
+      ...getSafeMarkdownConfig(),
+      crossnote: { ...getSafeMarkdownConfig().crossnote, protocolsWhiteList: "http://, file://" }
+    };
+
+    expect(() => assertSafeConfig(config)).toThrow("file URL protocols");
+  });
 });

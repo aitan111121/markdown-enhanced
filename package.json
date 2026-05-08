@@ -1,9 +1,37 @@
 {
   "name": "zed-markdown-preview-enhanced",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
   "description": "Secure browser-based Markdown Preview Enhanced workflow for Zed.",
   "type": "module",
+  "license": "MIT",
+  "homepage": "https://github.com/harris1111/markdown-enhanced#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harris1111/markdown-enhanced.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harris1111/markdown-enhanced/issues"
+  },
+  "bin": {
+    "zed-mpe": "packages/server/dist/cli.js"
+  },
+  "files": [
+    "Cargo.toml",
+    "extension.toml",
+    "src/",
+    "packages/server/dist/",
+    "packages/browser-preview/dist/",
+    "packages/browser-preview/src/preview.css",
+    "README.md",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md",
+    "docs/usage.md",
+    "docs/security.md",
+    "docs/threat-model.md",
+    "docs/feature-parity.md",
+    "docs/release-checklist.md"
+  ],
   "workspaces": [
     "packages/server",
     "packages/browser-preview"
@@ -14,9 +42,17 @@
     "build:extension": "cargo check",
     "dev": "npm run zed-mpe -- preview --workspace . --file README.md --port 0 --no-open",
     "lint": "npm run typecheck --workspaces",
+    "prepack": "npm run build:node",
+    "smoke:package": "node scripts/release-smoke.mjs",
     "test": "npm run test --workspaces --if-present && cargo test",
     "typecheck": "npm run typecheck --workspaces",
     "zed-mpe": "node packages/server/dist/cli.js"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "crossnote": "^0.9.24",
+    "markdown-it": "^14.1.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

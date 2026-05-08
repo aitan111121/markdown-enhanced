@@ -6,6 +6,7 @@ import {
 
 export interface RenderOptions {
   preserveScroll: boolean;
+  diagnostics?: string[];
 }
 
 let lastGoodHtml = "";
@@ -22,6 +23,7 @@ export function renderPreview(
   }
 
   container.innerHTML = html;
+  renderDiagnostics(container, options.diagnostics ?? []);
   lastGoodHtml = html;
 
   if (scrollState) {
@@ -63,6 +65,18 @@ export function clearErrors(container: HTMLElement): void {
   if (banner) {
     banner.remove();
   }
+}
+
+function renderDiagnostics(container: HTMLElement, diagnostics: string[]): void {
+  if (diagnostics.length === 0) {
+    return;
+  }
+
+  const banner = document.createElement("div");
+  banner.className = "preview-diagnostics-banner";
+  banner.setAttribute("role", "status");
+  banner.textContent = diagnostics.join(" ");
+  container.prepend(banner);
 }
 
 function escapeHtml(text: string): string {

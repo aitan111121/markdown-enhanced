@@ -31,14 +31,22 @@
 - Do not expose environment variables, secrets, or full internal errors to browser payloads.
 - Validate Host and Origin headers against localhost-only values for every HTTP and WebSocket route.
 - Sanitize rich-copy HTML fragments, stripping scripts, event handlers, and executable attributes.
+- Compare browser, WebSocket, export, and control tokens with fixed-time checks where possible.
+- Reject UNC-style paths, malformed percent encoding, encoded traversal characters, and symlink escapes outside the workspace.
+- Detect runnable Crossnote-style code chunk fences and add diagnostics while keeping execution disabled.
+- Log security-relevant denials without printing token values.
 
 ## Deferred Controls
 
-- SameSite session cookie after one-time URL bootstrap if Phase 6 keeps cookie-based sessions.
-- Token replay tests.
-- Symlink, junction, UNC, encoded traversal, and Windows drive-case tests.
+- SameSite session cookie after one-time URL bootstrap if a future browser session model needs cookies.
+- Junction-specific Windows regression tests beyond realpath symlink coverage.
+- Windows drive-case CI matrix validation beyond current normalization tests.
 - Crossnote dependency audit mitigation: `markdown-it-html5-embed` currently pulls nested `markdown-it@8.4.2` with no npm audit fix. Keep that feature surface unavailable from defaults, workspace config, and imports, then revisit dependency replacement or patching before release gates.
 - PDF export, Crossnote direct export APIs, arbitrary `.crossnote/config.js`, `head.html`, parser JS, and code chunk execution remain deferred until explicit trust and dependency audits exist.
+
+## Release Gate
+
+`0.1.0` is ready for release testing only while code chunk execution remains blocked. Future trusted execution must add an explicit user action, workspace trust UI, command allow/deny audit trail, and another adversarial review.
 
 ## Phase 1 Gate
 

@@ -1,6 +1,6 @@
 {
   "name": "@zed-mpe/browser-preview",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Browser preview shell for the Zed Markdown Preview Enhanced workflow.",
   "type": "module",

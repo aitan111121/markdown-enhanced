@@ -105,6 +105,16 @@ body {
   padding: 12px 16px;
 }
 
+.preview-diagnostics-banner {
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, transparent);
+  border-radius: 6px;
+  color: color-mix(in srgb, CanvasText 88%, #92400e);
+  font-size: 14px;
+  margin-bottom: 24px;
+  padding: 12px 16px;
+}
+
 .preview-error-empty {
   background: color-mix(in srgb, #ef4444 8%, transparent);
   border: 1px solid color-mix(in srgb, #ef4444 20%, transparent);

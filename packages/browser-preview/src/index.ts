@@ -64,6 +64,7 @@ function connect(
       applyCustomStyle(message.payload.customStyle?.css);
       renderPreview(previewRoot, message.payload.html, {
         preserveScroll: true,
+        diagnostics: message.payload.diagnostics,
       });
       setStatus(statusNode, `Rendered ${new Date().toLocaleTimeString()}`);
       return;

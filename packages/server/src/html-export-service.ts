@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { RenderPayload } from "./contracts.js";
+import { sanitizeServerHtml } from "./server-html-sanitizer.js";
 
 const BASE_EXPORT_CSS = `
 :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
@@ -23,6 +24,7 @@ body { margin: 0; background: Canvas; color: CanvasText; }
 export function createHtmlExport(payload: RenderPayload): string {
   const title = getExportTitle(payload);
   const customStyle = payload.customStyle?.css ? `\n<style>\n${payload.customStyle.css}\n</style>` : "";
+  const html = sanitizeServerHtml(payload.html);
 
   return `<!doctype html>
 <html lang="en">
@@ -36,7 +38,7 @@ ${BASE_EXPORT_CSS.trim()}
     </style>${customStyle}
   </head>
   <body>
-${payload.html}
+${html}
   </body>
 </html>`;
 }

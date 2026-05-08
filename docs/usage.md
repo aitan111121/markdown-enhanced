@@ -49,6 +49,12 @@ The preview task passes paths as arguments, not shell-concatenated strings:
 
 The task uses `save: "current"`, so MVP preview behavior is save-based. Unsaved-buffer streaming is not part of the MVP unless a later Zed API proof changes this decision.
 
+## Security Diagnostics
+
+Runnable code chunks are detected and blocked in `0.1.0`. If a document contains a fence such as `{cmd=true}`, the browser shows a diagnostic above the preview and renders the chunk as static content.
+
+Do not share tokenized preview URLs. They are single-session browser entry points for the local preview server.
+
 ## Custom Preview CSS
 
 Create `.crossnote/style.less` in the workspace to apply a conservative CSS-only customization subset. Phase 5 treats the file as CSS text: rules must target `.markdown-preview` or `.preview-root`, and CSS escapes, function-like tokens, `@import`, `url(...)`, executable CSS patterns, global selectors, scripts, parser hooks, and `head.html` remain disabled.
@@ -62,3 +68,17 @@ npm run zed-mpe -- preview --workspace . --file README.md --port 0 --open --save
 ```
 
 Use `--no-open` to print the preview URL without launching the browser.
+
+## Release Validation
+
+Before installing as a Zed dev extension or opening a registry PR, run:
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+npm run test
+npm run smoke:package
+```
+
+See [release-checklist.md](release-checklist.md) for Zed registry and manual rich-copy validation steps.

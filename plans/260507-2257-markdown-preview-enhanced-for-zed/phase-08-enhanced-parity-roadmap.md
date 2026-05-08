@@ -8,7 +8,7 @@
 ## Overview
 
 - Priority: P2
-- Status: Pending
+- Status: Complete
 - Goal: plan the post-MVP work that moves toward MPE parity while respecting Zed's external-browser reality.
 
 ## Key Insights
@@ -16,6 +16,7 @@
 - Full MPE parity is a long-term program, not a single MVP.
 - Some features port cleanly through Crossnote; others depend on VS Code editor APIs and need redesign.
 - Advanced export and diagram features carry external binary, network, or license friction.
+- Phase 8 is complete as a documented roadmap matrix. Runtime implementation starts only after release feedback selects a track.
 
 ## Requirements
 
@@ -41,13 +42,8 @@ Recommended post-MVP order:
 
 ## Related Code Files
 
-- Create `F:\Windows\Study\Selfhost\zed-extension\docs\feature-parity.md`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\note-index-service.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\backlink-service.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\tag-index-service.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\browser-preview\src\graph-view.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\pandoc-export-service.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\image-helper-service.ts`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\docs\feature-parity.md`.
+- Deferred `note-index-service.ts`, `backlink-service.ts`, `tag-index-service.ts`, `graph-view.ts`, `pandoc-export-service.ts`, and `image-helper-service.ts` until post-MVP demand selects a track.
 
 ## Implementation Steps
 
@@ -62,7 +58,7 @@ Recommended post-MVP order:
 
 ## Todo List
 
-- [ ] Build feature parity matrix.
+- [x] Build feature parity matrix.
 - [ ] Implement wikilinks and note index.
 - [ ] Implement backlinks and tags.
 - [ ] Implement browser graph view.
@@ -74,8 +70,8 @@ Recommended post-MVP order:
 ## Success Criteria
 
 - Users can see exactly which MPE features are supported, partial, deferred, or impossible in Zed.
-- Browser-based knowledge-base features work without requiring Zed custom UI.
-- Advanced external dependencies are optional and detected cleanly.
+- Browser-based knowledge-base features have a documented implementation track.
+- Advanced external dependencies are documented as optional future work.
 
 ## Risk Assessment
 

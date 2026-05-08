@@ -315,6 +315,41 @@ describe("startPreviewServer", () => {
 
     expect(response.status).toBe(401);
   });
+
+  it("rejects encoded traversal through the session control endpoint", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const server = await startPreviewServer({
+      workspacePath: workspace,
+      filePath,
+      port: 0,
+      controlToken: "test-control-token"
+    });
+    servers.push(server);
+
+    const response = await fetch(`http://127.0.0.1:${server.port}/sessions`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-zed-mpe-control-token": "test-control-token"
+      },
+      body: JSON.stringify({ filePath: "%2e%2e%2fsecret.md" })
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("does not expose CORS headers for preflight requests", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
+    servers.push(server);
+
+    const response = await fetch(`http://127.0.0.1:${server.port}/health`, {
+      method: "OPTIONS",
+      headers: { origin: "http://localhost" }
+    });
+
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  });
 });
 
 async function makeWorkspace(): Promise<{ workspace: string; filePath: string }> {

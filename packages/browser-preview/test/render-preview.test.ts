@@ -42,6 +42,19 @@ describe("renderPreview", () => {
     expect(container.innerHTML).toBe("<p>No scroll restore</p>");
     expect(window.scrollTo).not.toHaveBeenCalled();
   });
+
+  it("shows render diagnostics without replacing preview content", () => {
+    const container = document.createElement("main");
+
+    renderPreview(container, "<p>Content</p>", {
+      preserveScroll: false,
+      diagnostics: ["Code chunk execution is disabled by default"]
+    });
+
+    expect(container.querySelector(".preview-diagnostics-banner")?.textContent)
+      .toContain("Code chunk execution is disabled by default");
+    expect(container.innerHTML).toContain("Content");
+  });
 });
 
 describe("initializeToolbar", () => {

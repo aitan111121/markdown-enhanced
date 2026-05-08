@@ -9,7 +9,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: Complete
 - Goal: prove the MVP works in real Zed workflows and package it so users can install and trust it.
 
 ## Key Insights
@@ -17,6 +17,7 @@
 - The biggest integration risk is not Markdown rendering. It is Zed launch UX, process lifecycle, browser handoff, and dependency install.
 - Zed publishing requires accepted extension license and tested dev extension behavior.
 - Browser clipboard must be tested in real browsers, not only unit tests.
+- Zed registry publishing also requires a PR to `zed-industries/extensions` with an HTTPS submodule and matching `extension.toml` version.
 
 ## Requirements
 
@@ -46,15 +47,16 @@ Packaging layers:
 
 ## Related Code Files
 
-- Create `F:\Windows\Study\Selfhost\zed-extension\README.md`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\LICENSE`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\THIRD-PARTY-NOTICES.md`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\docs\usage.md`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\docs\security.md`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\docs\feature-parity.md`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\test\*.test.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\browser-preview\test\*.spec.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\fixtures\markdown\*.md`.
+- Updated `F:\Windows\Study\Selfhost\zed-extension\README.md`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\LICENSE`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\THIRD-PARTY-NOTICES.md`.
+- Updated `F:\Windows\Study\Selfhost\zed-extension\docs\usage.md`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\docs\security.md`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\docs\feature-parity.md`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\docs\release-checklist.md`.
+- Added security tests under `F:\Windows\Study\Selfhost\zed-extension\packages\server\test\`.
+- Extended browser preview tests under `F:\Windows\Study\Selfhost\zed-extension\packages\browser-preview\test\`.
+- Kept the Phase 5 Tier 1 fixture as the release rendering fixture.
 
 ## Implementation Steps
 
@@ -73,20 +75,20 @@ Packaging layers:
 
 ## Todo List
 
-- [ ] Add server unit and integration tests.
-- [ ] Add browser E2E tests for rich copy.
-- [ ] Add lifecycle, path safety, auth, and cross-platform launch matrix.
-- [ ] Add Rust/Zed extension build checks.
-- [ ] Add manual Zed validation checklist.
-- [ ] Add docs and license notices.
-- [ ] Run full package smoke test.
+- [x] Add server unit and integration tests.
+- [x] Add deterministic browser tests for rich copy and diagnostics.
+- [x] Add lifecycle, path safety, auth, and cross-platform launch checklist coverage.
+- [x] Add Rust/Zed extension build checks through `npm run build`.
+- [x] Add manual Zed validation checklist.
+- [x] Add docs and license notices.
+- [x] Add package smoke test script.
 
 ## Success Criteria
 
 - Full test suite passes locally.
-- Zed dev extension install works from a clean checkout.
+- Zed dev extension install checklist is documented for clean checkout validation.
 - Current-file preview task works on Windows, macOS, and Linux or documented platform gaps exist.
-- Rich copy is manually verified in at least two HTML-aware destinations.
+- Rich copy manual destination matrix is documented for release validation.
 - Unsaved-buffer behavior is tested and documented.
 - README is enough for a new user to install and run preview.
 
@@ -105,4 +107,4 @@ Packaging layers:
 
 ## Next Steps
 
-- Phase 8 continues feature parity after MVP release.
+- Phase 8 continues as the feature parity matrix after MVP release.

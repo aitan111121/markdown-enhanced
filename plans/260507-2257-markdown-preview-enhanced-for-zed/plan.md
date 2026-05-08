@@ -48,7 +48,7 @@ No unfinished existing plans found. Workspace was empty at creation time.
 | 1 | [Repository Contracts and Scaffold](./phase-01-repository-contracts-and-scaffold.md) | Complete | 1w |
 | 2 | [Crossnote Preview Server Core](./phase-02-crossnote-preview-server-core.md) | In Progress | 2w |
 | 3 | [Browser Preview and Rich Copy](./phase-03-browser-preview-and-rich-copy.md) | Complete | 1.5w |
-| 4 | [Zed Launch Integration](./phase-04-zed-extension-launch-integration.md) | Pending | 1w |
+| 4 | [Zed Launch Integration](./phase-04-zed-extension-launch-integration.md) | Complete | 1w |
 | 5 | [MPE Tier One Rendering and Export](./phase-05-mpe-tier-one-rendering-and-export.md) | Pending | 1.5w |
 | 6 | [Security Permissions and Trusted Execution](./phase-06-security-permissions-and-trusted-execution.md) | Pending | 1w |
 | 7 | [Testing Packaging and Release](./phase-07-testing-packaging-and-release.md) | Pending | 1w |
@@ -60,8 +60,9 @@ No unfinished existing plans found. Workspace was empty at creation time.
 - Phase 1 freezes contracts and threat model.
 - Phase 2 is in progress: the secure saved-file server MVP is complete, while true Crossnote `Notebook.init()` integration remains pending.
 - Phase 3 is complete: the browser preview client consumes server payloads, preserves scroll, and supports rich/plain copy.
-- Phase 4 can run now from the frozen Phase 0 launch path, Phase 1 CLI contract, and Phase 2/3 MVP surfaces; it must make the task path feel like a one-action daily workflow.
-- Phase 5 only adds features allowed by Phase 0/1 security gates; Phase 6 completes hardening and trusted execution design.
+- Phase 4 is complete: the Zed task/keybinding path launches or reuses the per-workspace browser preview.
+- Return to the remaining Phase 2 Crossnote bridge before starting Phase 5 rendering/export parity.
+- Phase 5 only adds features allowed by Phase 0/1 security gates after the Crossnote bridge is complete; Phase 6 completes hardening and trusted execution design.
 - Phase 7 is the final integration gate.
 - Phase 8 is post-MVP expansion.
 

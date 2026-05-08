@@ -27,6 +27,10 @@ export class WorkspaceSessionStore {
     return this.#sessions.get(sessionId);
   }
 
+  getSessionsByFilePath(filePath: string): PreviewSession[] {
+    return Array.from(this.#sessions.values()).filter((session) => session.filePath === filePath);
+  }
+
   consumePreviewToken(sessionId: string, token: string | null): PreviewSession | undefined {
     const session = this.#sessions.get(sessionId);
     if (!session || session.previewTokenUsed || session.previewToken !== token) {
@@ -38,6 +42,6 @@ export class WorkspaceSessionStore {
   }
 }
 
-function randomToken(): string {
+export function randomToken(): string {
   return randomBytes(32).toString("base64url");
 }

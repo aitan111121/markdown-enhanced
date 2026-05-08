@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url";
 import { openPreviewUrl } from "./browser-launch.js";
-import { startPreviewServer } from "./server.js";
+import { createPreviewInExistingWorkspaceServer } from "./preview-server-client.js";
+import { startPreviewServer, type StartedPreviewServer } from "./server.js";
 
 type CliOptions = {
   command: "preview";
@@ -72,6 +73,22 @@ export function parseCliArgs(args: string[]): CliOptions {
 
 export async function main(args = process.argv.slice(2)): Promise<void> {
   const options = parseCliArgs(args);
+  let reused: Awaited<ReturnType<typeof createPreviewInExistingWorkspaceServer>> = undefined;
+
+  if (options.port === 0) {
+    reused = await createPreviewInExistingWorkspaceServer({
+      workspacePath: options.workspace,
+      filePath: options.file
+    });
+  }
+
+  if (reused) {
+    console.log(`[zed-mpe] reused ${reused.url}`);
+    console.log(`[zed-mpe] health http://127.0.0.1:${reused.port}/health`);
+    await openIfRequested(options.open, reused.url);
+    return;
+  }
+
   const started = await startPreviewServer({
     workspacePath: options.workspace,
     filePath: options.file,
@@ -81,12 +98,50 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
   console.log(`[zed-mpe] preview ${started.url}`);
   console.log(`[zed-mpe] health http://127.0.0.1:${started.port}/health`);
 
-  if (options.open) {
-    await openPreviewUrl(started.url).catch((error: unknown) => {
-      console.warn(`[zed-mpe] browser open failed: ${String(error)}`);
-      console.warn(`[zed-mpe] open manually: ${started.url}`);
+  installShutdownHandlers(started);
+  await openIfRequested(options.open, started.url);
+}
+
+function installShutdownHandlers(started: StartedPreviewServer): void {
+  let closing = false;
+
+  const cleanupState = () => {
+    started.cleanupWorkspaceStateSync();
+  };
+
+  process.once("exit", cleanupState);
+
+  const close = async () => {
+    if (closing) {
+      return;
+    }
+
+    closing = true;
+    cleanupState();
+    await started.close().catch((error: unknown) => {
+      console.error(`[zed-mpe] shutdown failed: ${String(error)}`);
     });
+    process.off("exit", cleanupState);
+    process.exit(0);
+  };
+
+  process.once("SIGINT", () => {
+    void close();
+  });
+  process.once("SIGTERM", () => {
+    void close();
+  });
+}
+
+async function openIfRequested(open: boolean, url: string): Promise<void> {
+  if (!open) {
+    return;
   }
+
+  await openPreviewUrl(url).catch((error: unknown) => {
+    console.warn(`[zed-mpe] browser open failed: ${String(error)}`);
+    console.warn(`[zed-mpe] open manually: ${url}`);
+  });
 }
 
 function requiredString(values: Map<string, string | boolean>, key: string): string {

@@ -2,27 +2,42 @@
 
 ## Recommended Daily Workflow
 
-Target workflow after setup:
-
-1. Open a saved Markdown file in Zed.
-2. Press the configured Markdown Preview Enhanced keybinding or action.
-3. The browser preview opens or reuses the existing workspace preview.
-4. Save the Markdown file to refresh the preview.
-
-Phase 4 verifies the shortest supported Zed keybinding path. Until then, the task picker flow below is the supported fallback.
-
-## Zed Task Fallback
-
-Build the Node packages first:
+Build the Node packages once after install or after changing TypeScript sources:
 
 ```bash
 npm install
 npm run build:node
 ```
 
-Open a saved Markdown file in Zed, then run `task: spawn` and select `MPE Preview Current File`.
+Then add a keybinding for the project task in your Zed `keymap.json`:
 
-The task passes paths as arguments:
+```json
+{
+  "context": "Workspace",
+  "bindings": {
+    "alt-m": ["task::Spawn", { "task_name": "MPE Preview Current File" }]
+  }
+}
+```
+
+Daily use:
+
+1. Open a saved Markdown file in Zed.
+2. Press the configured task keybinding.
+3. The task saves the current file, starts or reuses the workspace preview server, and opens a fresh tokenized browser URL.
+4. Save the Markdown file to refresh the preview.
+
+The first launch keeps a small server task running for that workspace. Later launches reuse it and exit quickly after opening a new preview URL. Stop the Zed task terminal to stop the preview server.
+
+## Zed Task Fallback
+
+If you do not want a keybinding, run `task: spawn` and select `MPE Preview Current File`.
+
+If the preview task reports that the server build is missing, run `task: spawn` and select `MPE Build Node Packages`, then retry the preview task.
+
+If Zed cannot find `npm`, verify that Zed's terminal shell has Node.js and npm on `PATH`. Zed tasks run in a login shell, so shell startup files are the right place to fix PATH mismatches.
+
+The preview task passes paths as arguments, not shell-concatenated strings:
 
 ```json
 {

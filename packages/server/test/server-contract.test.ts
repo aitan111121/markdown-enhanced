@@ -23,6 +23,14 @@ describe("startPreviewServer", () => {
     ).rejects.toThrow("Public bind is disabled");
   });
 
+  it("rejects browser-blocked explicit ports", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+
+    await expect(
+      startPreviewServer({ workspacePath: workspace, filePath, port: 10080 })
+    ).rejects.toThrow("blocked by browsers");
+  });
+
   it("serves health without exposing tokens", async () => {
     const { workspace, filePath } = await makeWorkspace();
     const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
@@ -77,6 +85,48 @@ describe("startPreviewServer", () => {
 
     const response = await fetch(`http://127.0.0.1:${server.port}/health`, {
       headers: { origin: "http://example.com" }
+    });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("creates additional preview sessions through the control endpoint", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const secondFilePath = path.join(workspace, "second.md");
+    await writeFile(secondFilePath, "# Second");
+    const server = await startPreviewServer({
+      workspacePath: workspace,
+      filePath,
+      port: 0,
+      controlToken: "test-control-token"
+    });
+    servers.push(server);
+
+    const response = await fetch(`http://127.0.0.1:${server.port}/sessions`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-zed-mpe-control-token": "test-control-token"
+      },
+      body: JSON.stringify({ filePath: secondFilePath })
+    });
+    const body = await response.json() as { url: string };
+    const preview = await fetch(body.url);
+
+    expect(response.status).toBe(200);
+    expect(body.url).toContain(`http://127.0.0.1:${server.port}/preview/`);
+    expect(preview.status).toBe(200);
+  });
+
+  it("rejects session creation without the control token", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
+    servers.push(server);
+
+    const response = await fetch(`http://127.0.0.1:${server.port}/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ filePath })
     });
 
     expect(response.status).toBe(403);

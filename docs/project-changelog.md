@@ -1,5 +1,15 @@
 # Project Changelog
 
+## 2026-05-08 Phase 4 Zed Launch Integration
+
+- Documented the Zed `task::Spawn` keybinding path for `MPE Preview Current File`.
+- Updated the preview task to save the current file, launch without stealing focus, and allow repeated launch attempts.
+- Added `MPE Build Node Packages` task for missing build diagnostics.
+- Added per-workspace server reuse: repeated CLI launches request a fresh one-time preview URL from the existing localhost server.
+- Added a control-token `POST /sessions` route for local CLI reuse without exposing control tokens in browser HTML or `/health`.
+- Added server tests for reuse, stale state cleanup, and control endpoint authorization.
+- Stabilized Windows watcher debounce testing under full-suite load and recorded the lesson in repository instructions.
+
 ## 2026-05-08 Phase 2/3 Implementation
 
 **Server Core (Phase 2)**
@@ -21,7 +31,7 @@
 - Added clipboard sanitization stripping scripts and event handlers.
 - Built preview toolbar with copy and error state UX.
 - Implemented plain-text fallback for copy operations.
-- Built 17+ browser client unit tests.
+- Built 20 browser client unit tests.
 - Verified browser smoke tests (preview 200, assets 200, bad Origin 403).
 
 ## 2026-05-08 Phase 0/1 Initial Scaffold

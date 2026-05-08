@@ -18,6 +18,9 @@ These instructions apply to all AI-assisted work in this repository.
 - When review, testing, or production use reveals an issue from previous AI-assisted work, distill the root lesson into this file or the most relevant project doc before final handoff. Keep it concise, actionable, and framed as a prevention rule.
 - Do not add browser refresh controls that reload one-time token preview URLs. Use live update channels or explicit new-session flows instead.
 - Preserve preview scroll against the actual scroll surface. For this browser preview, preserve `window` scroll unless the CSS makes a dedicated container the scroll owner and tests prove it.
+- For Windows file watcher tests, wait for watcher readiness and use timeouts that survive the full parallel suite; tight debounce assertions can pass alone and still flake under load.
+- When serving browser preview URLs, reject or retry browser-blocked ports even when using OS-assigned `--port 0`; Node fetch and Chromium-family browsers refuse these ports.
+- For Windows localhost reuse flows, do not assume the first request to a just-started server will connect immediately after the URL is printed; retry short local control requests before treating workspace server state as stale.
 
 ## Required Pre-Push Gates
 

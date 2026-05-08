@@ -96,10 +96,11 @@ CLI args -> session -> path validation -> Crossnote engine -> render payload -> 
 ## Success Criteria
 
 - [x] `zed-mpe preview --workspace ... --file ... --port 0` starts a server and returns a preview URL.
-- Saving a Markdown file causes a render update within the debounce window.
-- Requests outside workspace root are rejected.
-- Server can render Markdown headings and TOC through the safe adapter; front matter, math, and Mermaid fixtures remain pending true Crossnote integration.
-- Code chunks and custom parser JS cannot execute through default render path.
+- [x] Saving a Markdown file causes a render update within the debounce window.
+- [x] Requests outside workspace root are rejected.
+- [x] Server can render Markdown headings and TOC through the safe adapter.
+- [ ] Server can render front matter, math, and Mermaid fixtures through true Crossnote integration.
+- [x] Code chunks and custom parser JS cannot execute through default render path.
 
 ## Risk Assessment
 
@@ -120,5 +121,5 @@ CLI args -> session -> path validation -> Crossnote engine -> render payload -> 
 
 ## Next Steps
 
-- Phase 3 consumes the server preview page and WebSocket payloads.
-- Phase 4 launches this CLI from Zed tasks/extension wiring.
+- Finish true Crossnote `Notebook.init()` and `getNoteMarkdownEngine()` integration before closing Phase 2.
+- Phase 4 launches this CLI and the completed Phase 3 browser client from Zed tasks/extension wiring.

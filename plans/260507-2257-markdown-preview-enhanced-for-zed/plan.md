@@ -58,9 +58,9 @@ No unfinished existing plans found. Workspace was empty at creation time.
 
 - Phase 0 is complete. It proved Zed task launch UX, saved-file update semantics, distribution path, and security gates.
 - Phase 1 freezes contracts and threat model.
-- Phase 2 is active and delivers a secure minimal saved-file server before browser work depends on it.
-- Phase 3 starts after Phase 2 provides stable preview payload stubs.
-- Phase 4 can run after Phase 0 launch path and Phase 1 CLI contract are frozen; it must make the task path feel like a one-action daily workflow.
+- Phase 2 is in progress: the secure saved-file server MVP is complete, while true Crossnote `Notebook.init()` integration remains pending.
+- Phase 3 is complete: the browser preview client consumes server payloads, preserves scroll, and supports rich/plain copy.
+- Phase 4 can run now from the frozen Phase 0 launch path, Phase 1 CLI contract, and Phase 2/3 MVP surfaces; it must make the task path feel like a one-action daily workflow.
 - Phase 5 only adds features allowed by Phase 0/1 security gates; Phase 6 completes hardening and trusted execution design.
 - Phase 7 is the final integration gate.
 - Phase 8 is post-MVP expansion.

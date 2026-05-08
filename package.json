@@ -1,0 +1,33 @@
+{
+  "name": "zed-markdown-preview-enhanced",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Secure browser-based Markdown Preview Enhanced workflow for Zed.",
+  "type": "module",
+  "workspaces": [
+    "packages/server",
+    "packages/browser-preview"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces && cargo check",
+    "build:node": "npm run build --workspaces",
+    "build:extension": "cargo check",
+    "dev": "npm run zed-mpe -- preview --workspace . --file README.md --port 0 --no-open",
+    "lint": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present && cargo test",
+    "typecheck": "npm run typecheck --workspaces",
+    "zed-mpe": "node packages/server/dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "gitnexus": "^1.6.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  },
+  "overrides": {
+    "@ladybugdb/core": "0.16.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -9,7 +9,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: Complete
 - Goal: create the project skeleton and freeze the contracts between Zed, the Node server, and the browser preview before deeper work begins.
 
 ## Key Insights
@@ -84,12 +84,22 @@ Contracts:
 
 ## Todo List
 
-- [ ] Create repository scaffold.
-- [ ] Define CLI, HTTP, WebSocket contracts.
-- [ ] Import Phase 0 launch, distribution, and threat model decisions.
-- [ ] Add Zed task template for current file preview.
-- [ ] Add initial docs with architecture and standards.
-- [ ] Verify scaffold builds or fails only on known missing implementation.
+- [x] Create repository scaffold.
+- [x] Define CLI, HTTP, WebSocket contracts.
+- [x] Import Phase 0 launch, distribution, and threat model decisions.
+- [x] Add Zed task template for current file preview.
+- [x] Add initial docs with architecture and standards.
+- [x] Verify Rust extension scaffold once `cargo` is available.
+
+## Implementation Notes
+
+- Added npm workspaces for `packages/server` and `packages/browser-preview`.
+- Added a minimal Rust/Zed extension manifest and `src/lib.rs`.
+- Added `.zed/tasks.json` with current-file preview and launch-smoke tasks.
+- Added a buildable localhost preview server shell with `/health`, tokenized preview URL, and WebSocket bootstrap.
+- Added one-time preview bootstrap token, separate WebSocket token, CSP/no-store preview shell headers, localhost-only bind guard, and bounded render reads.
+- Added server tests for path containment, file size caps, escaped placeholder render output, public-bind rejection, health token non-exposure, preview token replay, and preview shell security headers.
+- Validation passed for `npm run build:node`, `npm run typecheck`, `npm run lint`, `npm run test --workspaces --if-present`, `cargo check`, `cargo test`, VS Code diagnostics, and built CLI health smoke.
 
 ## Success Criteria
 

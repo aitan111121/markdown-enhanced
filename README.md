@@ -4,10 +4,11 @@ This repository is building a secure Zed workflow for opening the current saved 
 
 ## Current Scope
 
-- Zed task launch with `$ZED_FILE` and `$ZED_WORKTREE_ROOT`.
+- Zed task/keybinding launch with `$ZED_FILE` and `$ZED_WORKTREE_ROOT`.
 - Save-based preview semantics through `save: "current"`.
 - Localhost-only preview server bound to `127.0.0.1`.
 - Tokenized preview URL and WebSocket session bootstrap.
+- Per-workspace server reuse for repeated current-file launches.
 - Safe markdown-it renderer with escape validation and secure defaults; Crossnote Notebook.init integration pending.
 
 ## Development

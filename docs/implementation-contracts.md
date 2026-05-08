@@ -20,16 +20,18 @@ Required invariants:
 - `--file` must resolve inside the workspace root.
 - `--save-mode filesystem` is the only MVP mode.
 - `--port 0` asks the OS for an available localhost port.
+- With `--port 0`, the CLI first attempts to reuse the workspace server state and request a fresh one-time preview URL from the existing localhost server.
 
 ## HTTP
 
 - `GET /health`: returns readiness and active session count.
 - `GET /preview/:sessionId?token=...`: consumes the one-time preview bootstrap token and serves the preview shell (non-cacheable, Host/Origin validated).
+- `POST /sessions`: local control-token endpoint used by the CLI to create a fresh preview session on an existing per-workspace server.
 - `GET /assets/browser-preview.js`: serves the browser client (WebSocket lifecycle and event handling).
 - `GET /assets/render-preview.js`: serves the render replacement logic (scroll-preserving DOM updates).
 - `GET /assets/preview.css`: serves preview styles.
 
-Phase 4+ will add stable render/session/export routes.
+Phase 5+ will add stable render/export routes.
 
 ## WebSocket
 
@@ -44,6 +46,7 @@ Rich copy operations (selection and full document as text/html + text/plain) are
 
 - Bind to `127.0.0.1`.
 - Use high-entropy one-time preview tokens plus separate browser WebSocket tokens.
+- Store per-workspace reuse state in the user's temp directory with a control token; never expose the control token through `/health` or browser HTML.
 - Validate source paths with `realpath` containment.
 - Reject files above the source size cap.
 - Enforce a strict preview-shell Content Security Policy with no inline script.

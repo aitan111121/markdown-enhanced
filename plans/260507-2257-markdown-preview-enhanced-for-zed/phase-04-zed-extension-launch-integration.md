@@ -9,7 +9,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: Complete
 - Goal: make the Zed-side workflow feel like one action for daily use, even though the preview itself runs in the browser.
 
 ## Key Insights
@@ -17,7 +17,7 @@
 - Zed extensions are Rust/WASM and capability-gated.
 - Public docs list extension types, capabilities, tasks, process execution, npm install, and slash/context server APIs, but not VS Code-style arbitrary webviews.
 - Phase 0 proved the Zed task path, so Phase 4 should make that path feel like a direct preview action.
-- `task: spawn` remains a fallback and diagnostic path, not the recommended daily workflow.
+- Zed supports direct keybindings for named tasks through `task::Spawn`; `task: spawn` remains the fallback and diagnostic path.
 
 ## Requirements
 
@@ -50,16 +50,18 @@ Fallback UX:
 
 - User runs `task: spawn` and selects `MPE Preview Current File`.
 - Developer runs `npm run zed-mpe -- preview --workspace . --file README.md --open` from a terminal.
-- If extension cannot open browser, server prints URL and copies URL when possible.
+- If the CLI cannot open the browser, it prints a manual URL fallback.
 
 ## Related Code Files
 
-- Create `F:\Windows\Study\Selfhost\zed-extension\extension.toml`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\Cargo.toml`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\src\lib.rs`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\.zed\tasks.json`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\docs\usage.md`.
+- Update `F:\Windows\Study\Selfhost\zed-extension\extension.toml`.
+- Update `F:\Windows\Study\Selfhost\zed-extension\Cargo.toml`.
+- Update `F:\Windows\Study\Selfhost\zed-extension\src\lib.rs`.
+- Update `F:\Windows\Study\Selfhost\zed-extension\.zed\tasks.json`.
+- Update `F:\Windows\Study\Selfhost\zed-extension\docs\usage.md`.
 - Modify `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\cli.ts` for Zed task-friendly output.
+- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\preview-server-client.ts`.
+- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\workspace-server-state.ts`.
 
 ## Implementation Steps
 
@@ -76,21 +78,21 @@ Fallback UX:
 
 ## Todo List
 
-- [ ] Build minimal Zed extension scaffold.
-- [ ] Keep current-file preview task as stable fallback.
-- [ ] Document the shortest supported keybinding workflow.
-- [ ] Implement server reuse and browser handoff.
-- [ ] Add missing-runtime diagnostics.
-- [ ] Document task picker and terminal fallback usage.
-- [ ] Apply Phase 0 feasibility outcome for command palette/slash command path.
+- [x] Build minimal Zed extension scaffold.
+- [x] Keep current-file preview task as stable fallback.
+- [x] Document the shortest supported keybinding workflow.
+- [x] Implement server reuse and browser handoff.
+- [x] Add missing-runtime diagnostics.
+- [x] Document task picker and terminal fallback usage.
+- [x] Apply Phase 0 feasibility outcome for command palette/slash command path.
 
 ## Success Criteria
 
-- From Zed, user can preview the current Markdown file with one configured action when supported by Zed keymaps.
-- If Zed cannot bind directly to the named task, the documented fallback is the shortest supported task picker flow.
-- The preview server starts or reuses an existing per-workspace process.
-- Browser opens automatically on Windows, macOS, and Linux, or URL fallback is clear.
-- Capability declarations are minimal and explained.
+- [x] From Zed, user can preview the current Markdown file with one configured action when supported by Zed keymaps.
+- [x] If Zed cannot bind directly to the named task, the documented fallback is the shortest supported task picker flow.
+- [x] The preview server starts or reuses an existing per-workspace process.
+- [x] Browser opens automatically on Windows, macOS, and Linux, or URL fallback is clear.
+- [x] Capability declarations are minimal and explained.
 
 ## Risk Assessment
 
@@ -107,5 +109,5 @@ Fallback UX:
 
 ## Next Steps
 
+- Return to Phase 2 to finish the true Crossnote bridge before Phase 5 rendering/export parity.
 - Phase 7 validates this inside a real Zed dev extension install.
-- Phase 8 can improve UX if Zed adds richer extension action APIs.

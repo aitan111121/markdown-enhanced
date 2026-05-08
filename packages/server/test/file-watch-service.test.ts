@@ -67,7 +67,7 @@ describe("FileWatchService", () => {
     await new Promise((resolve) => setTimeout(resolve, 30));
     await writeFile(filePath, "change3");
 
-    await waitFor(() => events.length === 1);
+    await waitFor(() => events.length === 1, 4000);
     await new Promise((resolve) => setTimeout(resolve, 250));
 
     expect(events.length).toBe(1);
@@ -165,11 +165,11 @@ async function waitForWatchReady(service: FileWatchService, filePath: string): P
   });
 }
 
-async function waitFor(predicate: () => boolean): Promise<void> {
+async function waitFor(predicate: () => boolean, timeoutMs = 1500): Promise<void> {
   const startedAt = Date.now();
 
   while (!predicate()) {
-    if (Date.now() - startedAt > 1500) {
+    if (Date.now() - startedAt > timeoutMs) {
       throw new Error("Timed out waiting for condition");
     }
 

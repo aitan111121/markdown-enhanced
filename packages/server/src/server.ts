@@ -8,18 +8,26 @@ import { resolveWorkspaceFile } from "./path-safety.js";
 import { buildPreviewUrl } from "./preview-url.js";
 import { renderSavedFile } from "./saved-file-preview.js";
 import { createPreviewShell } from "./static-preview-shell.js";
-import { WorkspaceSessionStore } from "./workspace-session-store.js";
+import { randomToken, WorkspaceSessionStore } from "./workspace-session-store.js";
+import {
+  CONTROL_TOKEN_HEADER,
+  removeWorkspaceServerState,
+  removeWorkspaceServerStateSync,
+  writeWorkspaceServerState,
+} from "./workspace-server-state.js";
 
 export type PreviewServerOptions = {
   workspacePath: string;
   filePath: string;
   port: number;
   host?: string;
+  controlToken?: string;
 };
 
 export type StartedPreviewServer = {
   port: number;
   url: string;
+  cleanupWorkspaceStateSync: () => void;
   close: () => Promise<void>;
 };
 
@@ -27,28 +35,39 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
   const host = options.host ?? DEFAULT_HOST;
   assertAllowedHost(host);
 
+  if (options.port !== 0 && !isBrowserAllowedPort(options.port)) {
+    throw new Error(`Port ${options.port} is blocked by browsers. Use --port 0 or another local port.`);
+  }
+
   const resolved = await resolveWorkspaceFile(options);
+  const controlToken = options.controlToken ?? randomToken();
   const sessions = new WorkspaceSessionStore();
   const session = sessions.createSession(resolved);
   const webSockets = new WebSocketServer({ noServer: true });
   const fileWatch = new FileWatchService();
   const connectedClients = new Map<string, Set<WebSocket>>();
-  let latestRenderSequence = 0;
+  const latestRenderSequences = new Map<string, number>();
+  let boundPort = options.port;
 
-  fileWatch.on("file:change", async () => {
-    const clients = connectedClients.get(session.id);
-    if (!clients || clients.size === 0) {
-      return;
-    }
+  fileWatch.on("file:change", async (event) => {
+    await Promise.all(
+      sessions.getSessionsByFilePath(event.filePath).map(async (changedSession) => {
+        const clients = connectedClients.get(changedSession.id);
+        if (!clients || clients.size === 0) {
+          return;
+        }
 
-    await renderAndBroadcast(session, clients);
+        await renderAndBroadcast(changedSession, clients);
+      })
+    );
   });
 
   async function renderAndBroadcast(
     previewSession: typeof session,
     clients: Set<WebSocket>
   ): Promise<void> {
-    const renderSequence = (latestRenderSequence += 1);
+    const renderSequence = (latestRenderSequences.get(previewSession.id) ?? 0) + 1;
+    latestRenderSequences.set(previewSession.id, renderSequence);
 
     try {
       const payload = await renderSavedFile({
@@ -56,13 +75,13 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
         filePath: previewSession.filePath
       });
 
-      if (renderSequence === latestRenderSequence) {
+      if (renderSequence === latestRenderSequences.get(previewSession.id)) {
         sendToOpenClients(clients, { type: "preview:update", payload });
       }
     } catch (error) {
       console.error("[zed-mpe] render failed", error);
 
-      if (renderSequence === latestRenderSequence) {
+      if (renderSequence === latestRenderSequences.get(previewSession.id)) {
         sendToOpenClients(clients, { type: "preview:error", message: "Unable to render saved file" });
       }
     }
@@ -75,7 +94,13 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
         return;
       }
 
-      await handleRequest(request, response, sessions);
+      await handleRequest(request, response, {
+        sessions,
+        workspaceRoot: resolved.workspaceRoot,
+        host,
+        port: boundPort,
+        controlToken
+      });
     } catch (error) {
       console.error("[zed-mpe] request failed", error);
       sendJson(response, 500, { error: "internal_error" });
@@ -124,7 +149,7 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
       client.on("close", () => {
         clients.delete(client);
 
-        if (clients.size === 0) {
+        if (clients.size === 0 && !hasOpenClientsForFile(previewSession.filePath)) {
           void fileWatch.unwatch(previewSession.filePath);
         }
       });
@@ -139,41 +164,115 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
     });
   });
 
-  await listen(server, options.port, host);
-  const address = server.address();
-  const port = typeof address === "object" && address ? address.port : options.port;
+  const port = await listenOnBrowserAllowedPort(server, options.port, host);
+  boundPort = port;
   const url = buildPreviewUrl({ port, sessionId: session.id, token: session.previewToken, host });
+  await writeWorkspaceServerState({
+    version: 1,
+    workspaceRoot: resolved.workspaceRoot,
+    host,
+    port,
+    controlToken,
+    pid: process.pid,
+    updatedAt: new Date().toISOString()
+  });
 
   return {
     port,
     url,
+    cleanupWorkspaceStateSync: () => {
+      removeWorkspaceServerStateSync(resolved.workspaceRoot, controlToken);
+    },
     close: async () => {
-      await fileWatch.unwatchAll();
-      await new Promise<void>((resolve) => {
-        webSockets.close(() => resolve());
-      });
-      await new Promise<void>((resolve, reject) => {
-        server.close((error) => (error ? reject(error) : resolve()));
-      });
+      try {
+        closeConnectedClients(connectedClients);
+        await fileWatch.unwatchAll();
+        await new Promise<void>((resolve) => {
+          webSockets.close(() => resolve());
+        });
+        await closeServer(server);
+      } finally {
+        await removeWorkspaceServerState(resolved.workspaceRoot, controlToken);
+      }
     }
   };
+
+  function hasOpenClientsForFile(filePath: string): boolean {
+    return sessions.getSessionsByFilePath(filePath).some((candidate) => {
+      const clients = connectedClients.get(candidate.id);
+      return Boolean(clients && clients.size > 0);
+    });
+  }
 }
+
+function closeConnectedClients(connectedClients: Map<string, Set<WebSocket>>): void {
+  for (const clients of connectedClients.values()) {
+    for (const client of clients) {
+      client.terminate();
+    }
+  }
+
+  connectedClients.clear();
+}
+
+type RequestContext = {
+  sessions: WorkspaceSessionStore;
+  workspaceRoot: string;
+  host: string;
+  port: number;
+  controlToken: string;
+};
 
 async function handleRequest(
   request: IncomingMessage,
   response: ServerResponse,
-  sessions: WorkspaceSessionStore
+  context: RequestContext
 ): Promise<void> {
   const requestUrl = new URL(request.url ?? "/", `http://${request.headers.host ?? DEFAULT_HOST}`);
 
   if (request.method === "GET" && requestUrl.pathname === "/health") {
-    sendJson(response, 200, { ok: true, service: SERVICE_NAME, sessions: sessions.size });
+    sendJson(response, 200, { ok: true, service: SERVICE_NAME, sessions: context.sessions.size });
+    return;
+  }
+
+  if (request.method === "POST" && requestUrl.pathname === "/sessions") {
+    if (!hasControlToken(request, context.controlToken)) {
+      sendJson(response, 403, { error: "forbidden" });
+      return;
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = await readJsonBody(request);
+    } catch {
+      sendJson(response, 400, { error: "invalid_request" });
+      return;
+    }
+
+    if (typeof body.filePath !== "string" || body.filePath.trim() === "") {
+      sendJson(response, 400, { error: "missing_file" });
+      return;
+    }
+
+    const resolved = await resolveWorkspaceFile({
+      workspacePath: context.workspaceRoot,
+      filePath: body.filePath
+    });
+    const session = context.sessions.createSession(resolved);
+    sendJson(response, 200, {
+      url: buildPreviewUrl({
+        port: context.port,
+        sessionId: session.id,
+        token: session.previewToken,
+        host: context.host
+      })
+    });
     return;
   }
 
   const previewMatch = requestUrl.pathname.match(/^\/preview\/([^/]+)$/);
   if (request.method === "GET" && previewMatch) {
-    const session = sessions.consumePreviewToken(previewMatch[1], requestUrl.searchParams.get("token"));
+    const session = context.sessions.consumePreviewToken(previewMatch[1], requestUrl.searchParams.get("token"));
     if (!session) {
       sendJson(response, 401, { error: "invalid_session" });
       return;
@@ -202,6 +301,27 @@ async function handleRequest(
   sendJson(response, 404, { error: "not_found" });
 }
 
+async function listenOnBrowserAllowedPort(
+  server: ReturnType<typeof createServer>,
+  port: number,
+  host: string
+): Promise<number> {
+  const maxAttempts = port === 0 ? 10 : 1;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    await listen(server, port, host);
+    const boundPort = getBoundPort(server, port);
+
+    if (isBrowserAllowedPort(boundPort)) {
+      return boundPort;
+    }
+
+    await closeServer(server);
+  }
+
+  throw new Error("Unable to allocate a browser-safe localhost port");
+}
+
 function listen(server: ReturnType<typeof createServer>, port: number, host: string): Promise<void> {
   return new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -211,6 +331,30 @@ function listen(server: ReturnType<typeof createServer>, port: number, host: str
     });
   });
 }
+
+function closeServer(server: ReturnType<typeof createServer>): Promise<void> {
+  return new Promise((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
+}
+
+function getBoundPort(server: ReturnType<typeof createServer>, fallbackPort: number): number {
+  const address = server.address();
+  return typeof address === "object" && address ? address.port : fallbackPort;
+}
+
+function isBrowserAllowedPort(port: number): boolean {
+  return !BROWSER_BLOCKED_PORTS.has(port) && (port < 6665 || port > 6669);
+}
+
+const BROWSER_BLOCKED_PORTS = new Set([
+  1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77,
+  79, 87, 95, 101, 102, 103, 104, 109, 110, 111, 113, 115, 117, 119, 123,
+  135, 137, 139, 143, 161, 179, 389, 427, 465, 512, 513, 514, 515, 526,
+  530, 531, 532, 540, 548, 554, 556, 563, 587, 601, 636, 989, 990, 993,
+  995, 1719, 1720, 1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566,
+  6697, 10080
+]);
 
 function assertAllowedHost(host: string): void {
   if (host !== DEFAULT_HOST) {
@@ -252,6 +396,28 @@ function isAllowedOriginHeader(value: string | string[] | undefined): boolean {
   }
 }
 
+function hasControlToken(request: IncomingMessage, controlToken: string): boolean {
+  return request.headers[CONTROL_TOKEN_HEADER] === controlToken;
+}
+
+async function readJsonBody(request: IncomingMessage): Promise<Record<string, unknown>> {
+  const chunks: Buffer[] = [];
+  let sizeBytes = 0;
+
+  for await (const chunk of request) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk));
+    sizeBytes += buffer.length;
+    if (sizeBytes > 8192) {
+      throw new Error("Request body exceeds 8192 bytes");
+    }
+
+    chunks.push(buffer);
+  }
+
+  const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  return parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : {};
+}
+
 function sendToOpenClients(
   clients: Set<WebSocket>,
   message:
@@ -286,6 +452,10 @@ function sendHtml(response: ServerResponse, statusCode: number, html: string): v
 }
 
 function sendJson(response: ServerResponse, statusCode: number, body: unknown): void {
-  response.writeHead(statusCode, { "content-type": "application/json; charset=utf-8" });
+  response.writeHead(statusCode, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
+    "pragma": "no-cache"
+  });
   response.end(JSON.stringify(body));
 }

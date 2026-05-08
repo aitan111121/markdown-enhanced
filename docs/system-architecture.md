@@ -5,14 +5,14 @@
 Markdown Preview Enhanced for Zed uses an external browser preview because Zed extensions do not expose VS Code-style webviews. The first release path is:
 
 ```text
-Zed task -> Node CLI server -> localhost browser preview
+Zed keybinding/task -> Node CLI -> reused or new localhost server -> browser preview
 ```
 
 ## Components
 
 - `extension.toml`, `Cargo.toml`, `src/lib.rs`: minimal Zed extension shell for future capability probes.
 - `.zed/tasks.json`: primary MVP launch surface.
-- `packages/server`: Node CLI, local HTTP server, session store, path validation, and future Crossnote integration.
+- `packages/server`: Node CLI, local HTTP server, per-workspace reuse state, session store, path validation, and future Crossnote integration.
 - `packages/browser-preview`: browser WebSocket client and preview shell assets.
 - `docs`: contracts, threat model, distribution strategy, usage, and project standards.
 
@@ -27,16 +27,18 @@ zed-mpe preview --workspace <path> --file <path> --port <number|0> --open --save
 - `--port 0`: request an available local port.
 - `--open`: open the default browser.
 - `--save-mode filesystem`: preview saved file contents only.
+- `--port 0`: reuse the workspace server when possible; otherwise start a new localhost server.
 
 ## HTTP Contract
 
 - `GET /health`: server readiness and active session count.
 - `GET /preview/:sessionId?token=...`: browser preview shell (one-time bootstrap token, non-cacheable).
+- `POST /sessions`: control-token endpoint for CLI-only reuse of an existing workspace server.
 - `GET /assets/browser-preview.js`: browser client WebSocket lifecycle and event handling.
 - `GET /assets/render-preview.js`: browser render replacement logic (scroll-preserving DOM updates).
 - `GET /assets/preview.css`: preview stylesheet.
 
-Phase 4+ will add stable `POST /api/render`, `POST /api/sessions`, and export routes.
+Phase 5+ will add stable render/export routes.
 
 ## WebSocket Contract
 

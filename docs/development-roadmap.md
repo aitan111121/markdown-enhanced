@@ -10,7 +10,9 @@ The active delivery map is [plans/260507-2257-markdown-preview-enhanced-for-zed/
 - Phase 1: Complete. Repository contracts and scaffold are established for Node, browser, and Rust extension paths.
 - Phase 2: Mostly complete. Server core with safe markdown-it adapter, file watching, WebSocket updates, and Host/Origin validation complete; Crossnote Notebook.init integration pending.
 - Phase 3: Complete. Browser client with scroll-preserving render, rich copy (selection + full document), and error handling complete.
-- Phases 4-8: Pending Phase 4 Zed launch integration and remaining Phase 2 Crossnote integration work.
+- Phase 4: Complete. Zed task/keybinding workflow, current-file save behavior, per-workspace server reuse, and launch diagnostics are implemented.
+- Phase 5: Pending remaining Phase 2 Crossnote integration work.
+- Phases 6-8: Pending downstream security, release, and parity work.
 
 ## MVP Gates
 

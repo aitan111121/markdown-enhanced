@@ -16,20 +16,29 @@ describe("renderSavedFile", () => {
 
     const result = await renderSavedFile({ workspaceRoot: root, filePath });
 
-    expect(result.html).toContain("<h1>Hello</h1>");
-    expect(result.html).toContain("<p>World</p>");
+    expect(result.html).toMatch(/<h1[^>]*>Hello\s*<\/h1>/);
+    expect(result.html).toMatch(/<p[^>]*>World<\/p>/);
     expect(result.plainText).toContain("Hello");
     expect(result.plainText).toContain("World");
     expect(result.diagnostics).toEqual([]);
   });
 
-  it("escapes dangerous HTML when html mode is disabled", async () => {
+  it("strips dangerous HTML when html mode is disabled", async () => {
     const { root, filePath } = await writeTempFile("<script>alert(1)</script>");
 
     const result = await renderSavedFile({ workspaceRoot: root, filePath });
 
-    expect(result.html).toContain("&lt;script&gt;");
     expect(result.html).not.toContain("<script>");
+    expect(result.html).not.toContain("alert(1)");
+  });
+
+  it("renders Crossnote front matter and math features", async () => {
+    const { root, filePath } = await writeTempFile("---\ntitle: Saved Probe\n---\n# Saved Probe\n\n$x + y$");
+
+    const result = await renderSavedFile({ workspaceRoot: root, filePath });
+
+    expect(result.metadata?.frontMatter).toMatchObject({ title: "Saved Probe" });
+    expect(result.html).toContain("katex");
   });
 
   it("extracts table of contents from headings", async () => {

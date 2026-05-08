@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -20,9 +20,10 @@ describe("renderMarkdown", () => {
       workspaceRoot: workspace
     });
 
-    expect(result.html).toContain("<h1>Hello</h1>");
-    expect(result.html).toContain("<p>World</p>");
+    expect(result.html).toMatch(/<h1[^>]*>Hello\s*<\/h1>/);
+    expect(result.html).toMatch(/<p[^>]*>World<\/p>/);
     expect(result.html).toContain('class="markdown-preview"');
+    expect(result.diagnostics).toEqual([]);
   });
 
   it("extracts plain text from HTML", async () => {
@@ -55,7 +56,7 @@ describe("renderMarkdown", () => {
     ]);
   });
 
-  it("escapes HTML tags by default", async () => {
+  it("strips executable HTML tags by default", async () => {
     const workspace = await makeTempRoot();
     const result = await renderMarkdown({
       markdown: "<script>alert(1)</script>",
@@ -63,8 +64,113 @@ describe("renderMarkdown", () => {
       workspaceRoot: workspace
     });
 
-    expect(result.html).toContain("&lt;script&gt;");
     expect(result.html).not.toContain("<script>");
+    expect(result.html).not.toContain("alert(1)");
+  });
+
+  it("removes active preview HTML containers after Crossnote rendering", async () => {
+    const workspace = await makeTempRoot();
+    const result = await renderMarkdown({
+      markdown: "<style>body{display:none}</style><iframe src=\"https://example.com\"></iframe><p onclick=\"alert(1)\">Hi</p>",
+      sourcePath: path.join(workspace, "html.md"),
+      workspaceRoot: workspace
+    });
+
+    expect(result.html).not.toContain("<style");
+    expect(result.html).not.toContain("<iframe");
+    expect(result.html).not.toContain("onclick");
+    expect(result.html).toContain("Hi");
+  });
+
+  it("extracts front matter from Crossnote metadata", async () => {
+    const workspace = await makeTempRoot();
+    const result = await renderMarkdown({
+      markdown: "---\ntitle: Feature Probe\ntags:\n  - zed\n---\n# Feature Probe",
+      sourcePath: path.join(workspace, "note.md"),
+      workspaceRoot: workspace
+    });
+
+    expect(result.metadata?.frontMatter).toMatchObject({
+      title: "Feature Probe",
+      tags: ["zed"]
+    });
+    expect(result.html).toContain("Feature Probe");
+  });
+
+  it("renders KaTeX math through Crossnote", async () => {
+    const workspace = await makeTempRoot();
+    const result = await renderMarkdown({
+      markdown: "Inline math $x + y$.",
+      sourcePath: path.join(workspace, "math.md"),
+      workspaceRoot: workspace
+    });
+
+    expect(result.html).toContain("katex");
+    expect(result.html).toContain("x");
+    expect(result.html).toContain("y");
+  });
+
+  it("keeps Mermaid diagrams as renderable preview blocks", async () => {
+    const workspace = await makeTempRoot();
+    const result = await renderMarkdown({
+      markdown: "```mermaid\ngraph TD\n  A-->B\n```",
+      sourcePath: path.join(workspace, "diagram.md"),
+      workspaceRoot: workspace
+    });
+
+    expect(result.html.toLowerCase()).toContain("mermaid");
+    expect(result.html).toContain("graph TD");
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("ignores hostile workspace Crossnote config in Phase 2", async () => {
+    const workspace = await makeTempRoot();
+    await mkdir(path.join(workspace, ".crossnote"));
+    await writeFile(
+      path.join(workspace, ".crossnote", "config.js"),
+      "module.exports = { enableHTML5Embed: true, HTML5EmbedUseLinkSyntax: true, HTML5EmbedIsAllowedHttp: true };"
+    );
+
+    const result = await renderMarkdown({
+      markdown: "@[youtube](dQw4w9WgXcQ)",
+      sourcePath: path.join(workspace, "hostile.md"),
+      workspaceRoot: workspace
+    });
+
+    expect(result.html).not.toContain("<iframe");
+    expect(result.html).not.toContain("<video");
+    expect(result.html).not.toContain("youtube.com");
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("disables local Crossnote imports that escape the workspace", async () => {
+    const workspace = await makeTempRoot();
+    const outsidePath = path.join(path.dirname(workspace), `${path.basename(workspace)}-outside.md`);
+    tempRoots.push(outsidePath);
+    await writeFile(outsidePath, "outside secret");
+
+    const result = await renderMarkdown({
+      markdown: `@import "../${path.basename(outsidePath)}"`,
+      sourcePath: path.join(workspace, "note.md"),
+      workspaceRoot: workspace
+    });
+
+    expect(result.html).not.toContain("outside secret");
+    expect(result.html).toContain("import");
+    expect(result.diagnostics).toContain("Crossnote import directives are disabled by default");
+  });
+
+  it("disables remote Crossnote imports", async () => {
+    const workspace = await makeTempRoot();
+    const result = await renderMarkdown({
+      markdown: '@import "https://example.com/"',
+      sourcePath: path.join(workspace, "remote.md"),
+      workspaceRoot: workspace
+    });
+
+    expect(result.html).not.toContain("Example Domain");
+    expect(result.html).toContain("https://example.com/");
+    expect(result.diagnostics).toContain("Crossnote import directives are disabled by default");
   });
 
   it("handles render errors gracefully", async () => {
@@ -110,7 +216,7 @@ describe("renderMarkdown", () => {
     });
 
     expect(result.metadata?.toc?.[0].slug).toBe("hello-world");
-    expect(result.metadata?.toc?.[1].slug).toBe("foo-bar");
+    expect(result.metadata?.toc?.[1].slug).toBe("foo–bar");
   });
 });
 

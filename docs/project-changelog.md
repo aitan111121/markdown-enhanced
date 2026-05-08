@@ -1,5 +1,18 @@
 # Project Changelog
 
+## 2026-05-08 Phase 2 Crossnote Bridge
+
+- Added `crossnote@0.9.24` to the server package.
+- Replaced the markdown-it-only primary render path with real Crossnote notebook initialization via `Notebook.init()` and `getNoteMarkdownEngine()`.
+- Kept markdown-it as a safe fallback if Crossnote initialization or rendering fails.
+- Added safe Crossnote defaults for KaTeX math, front matter table rendering, Mermaid theme selection, disabled script execution, disabled code chunks, inert parser hooks, and empty custom header/global CSS.
+- Initialized Crossnote from a server-owned temporary notebook root so workspace `.crossnote/config.js` cannot override Phase 2 safety defaults.
+- Disabled Crossnote `@import` expansion in the Phase 2 preview path to prevent unvalidated local file reads and remote fetches.
+- Added post-render preview HTML hardening for scripts, styles, iframes, object/embed/applet containers, inline event handlers, and executable URL attributes.
+- Added renderer and saved-file tests for front matter metadata, KaTeX math, Mermaid preview blocks, script stripping, Crossnote heading IDs, TOC extraction, hostile `.crossnote/config.js` isolation, disabled imports, and active HTML stripping.
+- Verified the full server suite at 55 passing tests after the bridge and import hardening.
+- Security note: npm audit still reports 3 moderate Crossnote transitive findings through `markdown-it-html5-embed` -> nested `markdown-it@8.4.2`; no upstream fix is available, and Phase 2 keeps the affected feature surface disabled by default, unreachable from workspace config, and insulated from Crossnote `@import` expansion.
+
 ## 2026-05-08 Phase 4 Zed Launch Integration
 
 - Documented the Zed `task::Spawn` keybinding path for `MPE Preview Current File`.

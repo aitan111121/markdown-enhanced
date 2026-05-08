@@ -12,7 +12,7 @@ Zed keybinding/task -> Node CLI -> reused or new localhost server -> browser pre
 
 - `extension.toml`, `Cargo.toml`, `src/lib.rs`: minimal Zed extension shell for future capability probes.
 - `.zed/tasks.json`: primary MVP launch surface.
-- `packages/server`: Node CLI, local HTTP server, per-workspace reuse state, session store, path validation, and future Crossnote integration.
+- `packages/server`: Node CLI, local HTTP server, per-workspace reuse state, session store, path validation, Crossnote rendering bridge, and safe markdown-it fallback.
 - `packages/browser-preview`: browser WebSocket client and preview shell assets.
 - `docs`: contracts, threat model, distribution strategy, usage, and project standards.
 
@@ -40,6 +40,16 @@ zed-mpe preview --workspace <path> --file <path> --port <number|0> --open --save
 
 Phase 5+ will add stable render/export routes.
 
+## Render Pipeline
+
+- The server creates one Crossnote notebook per workspace cache entry, but points Crossnote at a server-owned temporary notebook root so workspace `.crossnote/config.js` is ignored in Phase 2.
+- Saved Markdown files render through `getNoteMarkdownEngine(filePath).parseMD(...)` with `runAllCodeChunks: false`.
+- Crossnote is loaded through Node `createRequire()` because its direct ESM import path currently fails on an extensionless transitive import.
+- If Crossnote initialization or rendering fails, the server renders through the safe markdown-it fallback and reports diagnostics in the payload.
+- Crossnote render calls are serialized per notebook cache entry before clearing shared engine caches.
+- Crossnote `@import` directives are escaped before parsing in Phase 2; contained import/resource support is deferred until a validated resolver exists.
+- Rendered preview HTML is post-filtered to remove active containers and executable attributes before wrapping in the browser payload.
+
 ## WebSocket Contract
 
 - `GET /ws/:sessionId?token=...`: browser update channel with Host/Origin validation.
@@ -63,3 +73,6 @@ Phase 5+ will add stable render/export routes.
 - Validate target files with realpath containment inside the workspace.
 - Enforce source file size caps at path resolution and render time.
 - Keep script execution, custom parser JavaScript, public bind, and run-all-code-chunks disabled by default.
+- Keep Crossnote custom header/global CSS empty until Phase 5/6 safe subsets are implemented.
+- Ignore workspace `.crossnote/config.js` until Phase 5/6 implements explicit whitelists.
+- Keep Crossnote imports disabled until resource reads and remote fetches are routed through explicit policy checks.

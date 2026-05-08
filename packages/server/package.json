@@ -1,0 +1,22 @@
+{
+  "name": "@zed-mpe/server",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Local Markdown Preview Enhanced server for Zed tasks.",
+  "type": "module",
+  "bin": {
+    "zed-mpe": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1"
+  }
+}

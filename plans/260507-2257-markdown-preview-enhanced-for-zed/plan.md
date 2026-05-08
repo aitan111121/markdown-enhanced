@@ -1,7 +1,7 @@
 ---
 title: "Markdown Preview Enhanced for Zed"
 description: "Build a Zed workflow that launches a secure Crossnote-powered local browser preview with rich formatted copy."
-status: pending
+status: in-progress
 priority: P1
 effort: 11w
 issue:
@@ -24,6 +24,7 @@ Create a Zed extension/workflow inspired by Markdown Preview Enhanced. Zed does 
 - Scope: expansion, but ship in tiers.
 - Runtime: Node CLI server with Crossnote.
 - Preview surface: external browser, not inline Zed UI.
+- MVP daily workflow: one Zed keybinding/task action opens or reuses a browser preview for the current saved Markdown file.
 - Code chunks: trusted opt-in only, disabled by default.
 - MVP priority: saved-file rich preview plus rich copy.
 - MVP update semantics: saved-file updates unless Phase 0 proves a safe unsaved-buffer stream from Zed.
@@ -43,9 +44,9 @@ No unfinished existing plans found. Workspace was empty at creation time.
 
 | Phase | Name | Status | Effort |
 |---|---|---:|---:|
-| 0 | [Feasibility Security and Distribution Gates](./phase-00-feasibility-security-and-distribution-gates.md) | Pending | 0.5w |
-| 1 | [Repository Contracts and Scaffold](./phase-01-repository-contracts-and-scaffold.md) | Pending | 1w |
-| 2 | [Crossnote Preview Server Core](./phase-02-crossnote-preview-server-core.md) | Pending | 2w |
+| 0 | [Feasibility Security and Distribution Gates](./phase-00-feasibility-security-and-distribution-gates.md) | Complete | 0.5w |
+| 1 | [Repository Contracts and Scaffold](./phase-01-repository-contracts-and-scaffold.md) | Complete | 1w |
+| 2 | [Crossnote Preview Server Core](./phase-02-crossnote-preview-server-core.md) | In Progress | 2w |
 | 3 | [Browser Preview and Rich Copy](./phase-03-browser-preview-and-rich-copy.md) | Pending | 1.5w |
 | 4 | [Zed Launch Integration](./phase-04-zed-extension-launch-integration.md) | Pending | 1w |
 | 5 | [MPE Tier One Rendering and Export](./phase-05-mpe-tier-one-rendering-and-export.md) | Pending | 1.5w |
@@ -55,11 +56,11 @@ No unfinished existing plans found. Workspace was empty at creation time.
 
 ## Parallel Strategy
 
-- Phase 0 must complete before implementation. It proves Zed launch UX, update semantics, distribution path, and security gates.
+- Phase 0 is complete. It proved Zed task launch UX, saved-file update semantics, distribution path, and security gates.
 - Phase 1 freezes contracts and threat model.
-- Phase 2 delivers a secure minimal saved-file server before browser work depends on it.
+- Phase 2 is active and delivers a secure minimal saved-file server before browser work depends on it.
 - Phase 3 starts after Phase 2 provides stable preview payload stubs.
-- Phase 4 can run after Phase 0 launch path and Phase 1 CLI contract are frozen.
+- Phase 4 can run after Phase 0 launch path and Phase 1 CLI contract are frozen; it must make the task path feel like a one-action daily workflow.
 - Phase 5 only adds features allowed by Phase 0/1 security gates; Phase 6 completes hardening and trusted execution design.
 - Phase 7 is the final integration gate.
 - Phase 8 is post-MVP expansion.

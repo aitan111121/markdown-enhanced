@@ -9,7 +9,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: Complete
 - Goal: prove risky assumptions before building the server and browser surface.
 
 ## Key Insights
@@ -61,12 +61,21 @@ Zed task/keybinding -> Node CLI server -> browser preview
 
 ## Todo List
 
-- [ ] Prove Zed launch path.
-- [ ] Decide saved-file vs unsaved-buffer preview semantics.
-- [ ] Decide server distribution strategy.
-- [ ] Write threat model.
-- [ ] Define localhost auth and path safety baseline.
-- [ ] Add Phase 1 contract updates from proof results.
+- [x] Prove Zed launch path inside Zed with the smoke task.
+- [x] Decide saved-file vs unsaved-buffer preview semantics.
+- [x] Decide server distribution strategy.
+- [x] Write threat model.
+- [x] Define localhost auth and path safety baseline.
+- [x] Add Phase 1 contract updates from proof results.
+
+## Implementation Notes
+
+- MVP update semantics are save-based through `.zed/tasks.json` using `save: "current"`.
+- Distribution starts as an npm workspace/package CLI launched from a Zed task.
+- The local CLI smoke passed against `README.md`.
+- The manual in-Zed smoke passed for `MPE Smoke: Print Zed File Context` and `MPE Preview Current File`.
+- The accepted MVP launch workflow is task-backed, with Phase 4 responsible for making it a one-action keybinding workflow for daily use.
+- Rust extension validation passed with `cargo check` and `cargo test` after adding the installed Cargo binary to the session PATH.
 
 ## Success Criteria
 
@@ -89,4 +98,4 @@ Zed task/keybinding -> Node CLI server -> browser preview
 
 ## Next Steps
 
-- Phase 1 consumes gate decisions and freezes contracts.
+- Phase 2 consumes complete gate decisions and implements the secure saved-file preview server core.

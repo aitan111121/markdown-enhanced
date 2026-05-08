@@ -1,0 +1,40 @@
+[
+  {
+    "label": "MPE Preview Current File",
+    "command": "npm",
+    "args": [
+      "run",
+      "zed-mpe",
+      "--",
+      "preview",
+      "--workspace",
+      "$ZED_WORKTREE_ROOT",
+      "--file",
+      "$ZED_FILE",
+      "--port",
+      "0",
+      "--open",
+      "--save-mode",
+      "filesystem"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "save": "current",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "hide": "never"
+  },
+  {
+    "label": "MPE Smoke: Print Zed File Context",
+    "command": "node",
+    "args": [
+      "prototypes/zed-launch-smoke/print-zed-task-env.mjs"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "save": "current",
+    "use_new_terminal": true,
+    "allow_concurrent_runs": true,
+    "reveal": "always",
+    "hide": "on_success"
+  }
+]

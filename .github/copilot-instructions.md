@@ -8,9 +8,16 @@ These instructions apply to all AI-assisted work in this repository.
 - Create a focused branch for every change, using prefixes like `feat/`, `fix/`, `docs/`, `test/`, or `chore/`.
 - Open a pull request into `main` and merge only after review, required checks, and plan alignment are complete.
 - Do not bypass branch protection, required reviews, or required checks, even for urgent or small changes.
+- Treat CodeRabbit as an advisory review signal unless branch protection explicitly marks it required. Do not block merge solely on a pending CodeRabbit status after local gates, required checks, plan alignment, and user-approved review are complete.
 - Keep commits focused. Do not mix unrelated refactors, formatting churn, generated files, or dependency updates into feature/fix commits.
 - Do not commit secrets, `.env` files, local credentials, private tokens, or generated indexes such as `.gitnexus/`.
 - After running GitNexus, keep `.gitnexus/` and other local generated indexes unstaged unless a tracked documentation artifact was intentionally requested.
+
+## Durable Lessons
+
+- When review, testing, or production use reveals an issue from previous AI-assisted work, distill the root lesson into this file or the most relevant project doc before final handoff. Keep it concise, actionable, and framed as a prevention rule.
+- Do not add browser refresh controls that reload one-time token preview URLs. Use live update channels or explicit new-session flows instead.
+- Preserve preview scroll against the actual scroll surface. For this browser preview, preserve `window` scroll unless the CSS makes a dedicated container the scroll owner and tests prove it.
 
 ## Required Pre-Push Gates
 

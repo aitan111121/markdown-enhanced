@@ -30,19 +30,29 @@ zed-mpe preview --workspace <path> --file <path> --port <number|0> --open --save
 
 ## HTTP Contract
 
-- `GET /health`: server readiness.
-- `GET /preview/:sessionId?token=...`: browser preview shell.
-- `GET /assets/browser-preview.js`: browser client asset.
+- `GET /health`: server readiness and active session count.
+- `GET /preview/:sessionId?token=...`: browser preview shell (one-time bootstrap token, non-cacheable).
+- `GET /assets/browser-preview.js`: browser client WebSocket lifecycle and event handling.
+- `GET /assets/render-preview.js`: browser render replacement logic (scroll-preserving DOM updates).
 - `GET /assets/preview.css`: preview stylesheet.
 
-Phase 2 will add stable `POST /api/sessions`, `POST /api/render`, and export routes.
+Phase 4+ will add stable `POST /api/render`, `POST /api/sessions`, and export routes.
 
 ## WebSocket Contract
 
-- `GET /ws/:sessionId?token=...`: browser update channel.
-- `preview:status`: connection and lifecycle status.
-- `preview:update`: rendered preview payload.
-- `preview:error`: non-destructive render error.
+- `GET /ws/:sessionId?token=...`: browser update channel with Host/Origin validation.
+- `preview:status`: connection and lifecycle status messages.
+- `preview:update`: rendered preview HTML payload.
+- `preview:error`: non-destructive render error (preserves last good preview).
+
+## Browser Client Capabilities
+
+- WebSocket lifecycle management with a reconnect control.
+- Scroll-preserving preview updates on saved-file changes.
+- Rich copy: selection as text/html + text/plain.
+- Rich copy: full document as text/html + text/plain.
+- Clipboard sanitization stripping scripts and event handlers.
+- Error display without destroying current preview state.
 
 ## Security Defaults
 

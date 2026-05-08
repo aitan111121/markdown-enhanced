@@ -47,7 +47,7 @@ No unfinished existing plans found. Workspace was empty at creation time.
 | 0 | [Feasibility Security and Distribution Gates](./phase-00-feasibility-security-and-distribution-gates.md) | Complete | 0.5w |
 | 1 | [Repository Contracts and Scaffold](./phase-01-repository-contracts-and-scaffold.md) | Complete | 1w |
 | 2 | [Crossnote Preview Server Core](./phase-02-crossnote-preview-server-core.md) | In Progress | 2w |
-| 3 | [Browser Preview and Rich Copy](./phase-03-browser-preview-and-rich-copy.md) | Pending | 1.5w |
+| 3 | [Browser Preview and Rich Copy](./phase-03-browser-preview-and-rich-copy.md) | Complete | 1.5w |
 | 4 | [Zed Launch Integration](./phase-04-zed-extension-launch-integration.md) | Pending | 1w |
 | 5 | [MPE Tier One Rendering and Export](./phase-05-mpe-tier-one-rendering-and-export.md) | Pending | 1.5w |
 | 6 | [Security Permissions and Trusted Execution](./phase-06-security-permissions-and-trusted-execution.md) | Pending | 1w |

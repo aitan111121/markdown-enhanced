@@ -8,7 +8,7 @@ This repository is building a secure Zed workflow for opening the current saved 
 - Save-based preview semantics through `save: "current"`.
 - Localhost-only preview server bound to `127.0.0.1`.
 - Tokenized preview URL and WebSocket session bootstrap.
-- Placeholder saved-file render path until Crossnote is integrated in Phase 2.
+- Safe markdown-it renderer with escape validation and secure defaults; Crossnote Notebook.init integration pending.
 
 ## Development
 

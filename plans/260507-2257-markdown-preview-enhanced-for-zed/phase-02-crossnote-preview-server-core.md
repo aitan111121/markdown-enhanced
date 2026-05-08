@@ -9,7 +9,7 @@
 ## Overview
 
 - Priority: P1
-- Status: In Progress
+- Status: In Progress (MVP server core complete; Crossnote notebook integration pending)
 - Goal: implement the Node CLI server that owns saved-file watching, secure Crossnote rendering, sessions, and browser delivery.
 
 ## Key Insights
@@ -77,24 +77,34 @@ CLI args -> session -> path validation -> Crossnote engine -> render payload -> 
 
 ## Todo List
 
-- [ ] Implement CLI server startup.
-- [ ] Implement workspace path validation.
-- [ ] Integrate Crossnote rendering.
-- [ ] Add safe Crossnote config wrapper.
-- [ ] Implement WebSocket update channel.
-- [ ] Add debounced file watch refresh.
-- [ ] Add fixture tests for render, safe config, large files, and path validation.
+### Completed (MVP Server Core)
+- [x] Implement CLI server startup.
+- [x] Implement workspace path validation (realpath + size caps).
+- [x] Add safe Crossnote config wrapper (script execution disabled, safe defaults enforced).
+- [x] Implement WebSocket update channel (token-gated, Host/Origin validated).
+- [x] Add debounced file watch refresh (300ms debounce, stale render suppression).
+- [x] Add fixture tests (38 server tests passing: path safety, safe config, render, large files, file watch, server contract).
+- [x] Basic Markdown rendering via the `crossnote-renderer.ts` markdown-it adapter.
+- [x] Host/Origin validation, single-use bootstrap token, non-cacheable preview HTML.
+- [x] Error handling with safe browser error display.
+
+### Remaining (Crossnote Integration Gap)
+- [ ] Integrate Crossnote `Notebook.init()` for full engine initialization (currently using adapter wrapper only).
+- [ ] Integrate `getNoteMarkdownEngine()` for engine instance reuse.
+- [ ] Support Crossnote notebook-level features (math, Mermaid, front matter extraction, TOC generation).
 
 ## Success Criteria
 
-- `zed-mpe preview --workspace ... --file ... --port 0` starts a server and returns a preview URL.
+- [x] `zed-mpe preview --workspace ... --file ... --port 0` starts a server and returns a preview URL.
 - Saving a Markdown file causes a render update within the debounce window.
 - Requests outside workspace root are rejected.
-- Server can render Markdown with headings, front matter, math, and Mermaid fixtures.
+- Server can render Markdown headings and TOC through the safe adapter; front matter, math, and Mermaid fixtures remain pending true Crossnote integration.
 - Code chunks and custom parser JS cannot execute through default render path.
 
 ## Risk Assessment
 
+- Risk: Crossnote `Notebook.init()` integration is not complete; current adapter is a safe markdown-it bridge.
+- Mitigation: keep Phase 2 in progress and finish the Crossnote adapter before claiming full Crossnote parity.
 - Risk: Crossnote assumes VS Code webview resources in some preview paths.
 - Mitigation: use Crossnote export/browser-oriented APIs and wrap resource resolution in the adapter.
 - Risk: dependency size grows quickly.

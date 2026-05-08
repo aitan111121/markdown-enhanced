@@ -25,10 +25,102 @@ body {
   font-size: 13px;
 }
 
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar-button {
+  background: color-mix(in srgb, CanvasText 8%, transparent);
+  border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+  border-radius: 4px;
+  color: CanvasText;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px 12px;
+  transition: background 0.15s ease;
+}
+
+.toolbar-button:hover {
+  background: color-mix(in srgb, CanvasText 12%, transparent);
+}
+
+.toolbar-button:active {
+  background: color-mix(in srgb, CanvasText 16%, transparent);
+}
+
+.reconnect-button {
+  background: color-mix(in srgb, CanvasText 8%, transparent);
+  border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+  border-radius: 4px;
+  color: CanvasText;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 8px;
+  padding: 4px 10px;
+}
+
+.reconnect-button:hover {
+  background: color-mix(in srgb, CanvasText 12%, transparent);
+}
+
+.copy-feedback {
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+.copy-feedback-success {
+  color: #22c55e;
+}
+
+.copy-feedback-error {
+  color: #ef4444;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .preview-root {
   margin: 0 auto;
   max-width: 880px;
   padding: 32px 24px 64px;
+}
+
+.preview-error-banner {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 14px;
+  margin-bottom: 24px;
+  padding: 12px 16px;
+}
+
+.preview-error-empty {
+  background: color-mix(in srgb, #ef4444 8%, transparent);
+  border: 1px solid color-mix(in srgb, #ef4444 20%, transparent);
+  border-radius: 8px;
+  color: CanvasText;
+  margin: 48px auto;
+  max-width: 600px;
+  padding: 32px;
+  text-align: center;
+}
+
+.preview-error-empty strong {
+  color: #ef4444;
+  display: block;
+  font-size: 18px;
+  margin-bottom: 8px;
 }
 
 .markdown-preview pre {
@@ -38,4 +130,102 @@ body {
   overflow: auto;
   padding: 16px;
   white-space: pre-wrap;
+}
+
+.markdown-preview code {
+  background: color-mix(in srgb, CanvasText 8%, transparent);
+  border-radius: 3px;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, Monaco, monospace;
+  font-size: 0.9em;
+  padding: 2px 6px;
+}
+
+.markdown-preview pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdown-preview table {
+  border-collapse: collapse;
+  margin: 16px 0;
+  width: 100%;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-preview th {
+  background: color-mix(in srgb, CanvasText 6%, transparent);
+  font-weight: 600;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin-bottom: 16px;
+  margin-top: 24px;
+}
+
+.markdown-preview h1 {
+  font-size: 2em;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent);
+  padding-bottom: 8px;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+  padding-bottom: 6px;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25em;
+}
+
+.markdown-preview a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview blockquote {
+  border-left: 4px solid color-mix(in srgb, CanvasText 30%, transparent);
+  margin: 16px 0;
+  padding-left: 16px;
+  color: color-mix(in srgb, CanvasText 72%, transparent);
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  margin: 16px 0;
+  padding-left: 32px;
+}
+
+.markdown-preview li {
+  margin: 4px 0;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid color-mix(in srgb, CanvasText 16%, transparent);
+  margin: 32px 0;
 }

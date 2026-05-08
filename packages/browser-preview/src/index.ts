@@ -1,19 +1,25 @@
-export {};
+import { renderPreview, renderError, clearErrors } from "./render-preview.js";
+import { initializeToolbar } from "./preview-toolbar.js";
 
 type ServerMessage =
   | { type: "preview:status"; message: string }
-  | { type: "preview:update"; payload: { html: string; sourcePath: string; diagnostics: string[] } }
+  | {
+      type: "preview:update";
+      payload: { html: string; sourcePath: string; diagnostics: string[] };
+    }
   | { type: "preview:error"; message: string };
 
 const root = document.querySelector<HTMLElement>("#preview-root");
 const statusNode = document.querySelector<HTMLElement>("#preview-status");
+const toolbar = document.querySelector<HTMLElement>(".preview-toolbar");
 const sessionId = document.body.dataset.sessionId;
 const token = document.body.dataset.token;
 
-if (!root || !statusNode || !sessionId || !token) {
+if (!root || !statusNode || !toolbar || !sessionId || !token) {
   throw new Error("Preview shell is missing required state");
 }
 
+initializeToolbar(toolbar, root);
 connect({ sessionId, token }, root, statusNode);
 
 function connect(
@@ -28,8 +34,13 @@ function connect(
   const socket = new WebSocket(socketUrl);
 
   socket.addEventListener("open", () => setStatus(statusNode, "Connected"));
-  socket.addEventListener("close", () => setStatus(statusNode, "Disconnected"));
-  socket.addEventListener("error", () => setStatus(statusNode, "Connection error"));
+  socket.addEventListener("close", () => {
+    setStatus(statusNode, "Disconnected");
+    showReconnectOption(statusNode, () => connect(sessionState, previewRoot, statusNode));
+  });
+  socket.addEventListener("error", () =>
+    setStatus(statusNode, "Connection error")
+  );
   socket.addEventListener("message", (event) => {
     const message = parseServerMessage(event.data);
     if (!message) {
@@ -42,12 +53,20 @@ function connect(
     }
 
     if (message.type === "preview:update") {
-      previewRoot.innerHTML = message.payload.html;
+      clearErrors(previewRoot);
+      renderPreview(previewRoot, message.payload.html, {
+        preserveScroll: true,
+      });
       setStatus(statusNode, `Rendered ${new Date().toLocaleTimeString()}`);
       return;
     }
 
-    setStatus(statusNode, message.message);
+    if (message.type === "preview:error") {
+      renderError(previewRoot, statusNode, message.message);
+      return;
+    }
+
+    setStatus(statusNode, "Unknown message");
   });
 }
 
@@ -65,4 +84,18 @@ function parseServerMessage(value: unknown): ServerMessage | undefined {
 
 function setStatus(statusNode: HTMLElement, message: string): void {
   statusNode.textContent = message;
+}
+
+function showReconnectOption(statusNode: HTMLElement, reconnect: () => void): void {
+  const reconnectBtn = document.createElement("button");
+  reconnectBtn.className = "reconnect-button";
+  reconnectBtn.textContent = "Reconnect";
+  reconnectBtn.type = "button";
+  reconnectBtn.addEventListener("click", () => {
+    setStatus(statusNode, "Reconnecting");
+    reconnect();
+  });
+
+  statusNode.textContent = "Disconnected ";
+  statusNode.appendChild(reconnectBtn);
 }

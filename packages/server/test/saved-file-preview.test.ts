@@ -11,12 +11,37 @@ afterEach(async () => {
 });
 
 describe("renderSavedFile", () => {
-  it("escapes markdown before returning placeholder HTML", async () => {
+  it("renders markdown to HTML", async () => {
+    const { root, filePath } = await writeTempFile("# Hello\n\nWorld");
+
+    const result = await renderSavedFile({ workspaceRoot: root, filePath });
+
+    expect(result.html).toContain("<h1>Hello</h1>");
+    expect(result.html).toContain("<p>World</p>");
+    expect(result.plainText).toContain("Hello");
+    expect(result.plainText).toContain("World");
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("escapes dangerous HTML when html mode is disabled", async () => {
     const { root, filePath } = await writeTempFile("<script>alert(1)</script>");
 
-    await expect(renderSavedFile({ workspaceRoot: root, filePath })).resolves.toMatchObject({
-      html: expect.stringContaining("&lt;script&gt;alert(1)&lt;/script&gt;")
-    });
+    const result = await renderSavedFile({ workspaceRoot: root, filePath });
+
+    expect(result.html).toContain("&lt;script&gt;");
+    expect(result.html).not.toContain("<script>");
+  });
+
+  it("extracts table of contents from headings", async () => {
+    const { root, filePath } = await writeTempFile("# Title\n## Section\n### Subsection");
+
+    const result = await renderSavedFile({ workspaceRoot: root, filePath });
+
+    expect(result.metadata?.toc).toEqual([
+      { level: 1, text: "Title", slug: "title" },
+      { level: 2, text: "Section", slug: "section" },
+      { level: 3, text: "Subsection", slug: "subsection" }
+    ]);
   });
 
   it("rechecks the file size before render", async () => {

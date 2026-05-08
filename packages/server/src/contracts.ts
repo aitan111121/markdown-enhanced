@@ -12,8 +12,19 @@ export const SECURITY_DEFAULTS = {
 
 export type RenderPayload = {
   html: string;
+  plainText: string;
   sourcePath: string;
   diagnostics: string[];
+  metadata?: {
+    frontMatter?: Record<string, unknown>;
+    toc?: TocEntry[];
+  };
+};
+
+export type TocEntry = {
+  level: number;
+  text: string;
+  slug: string;
 };
 
 export type PreviewSession = {

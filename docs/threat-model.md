@@ -23,14 +23,14 @@
 - Reject source files above the configured size cap.
 - Disable script execution, code chunks, custom parser JavaScript, public bind, and export-time `runAllCodeChunks` by default.
 - Do not expose environment variables, secrets, or full internal errors to browser payloads.
+- Validate Host and Origin headers against localhost-only values for every HTTP and WebSocket route.
+- Sanitize rich-copy HTML fragments, stripping scripts, event handlers, and executable attributes.
 
 ## Deferred Controls
 
-- Host and Origin validation for every route and WebSocket upgrade.
 - SameSite session cookie after one-time URL bootstrap if Phase 6 keeps cookie-based sessions.
 - Token replay tests.
 - Symlink, junction, UNC, encoded traversal, and Windows drive-case tests.
-- Sanitized rich-copy fragments that strip scripts and event handlers.
 
 ## Phase 1 Gate
 

@@ -24,18 +24,21 @@ Required invariants:
 ## HTTP
 
 - `GET /health`: returns readiness and active session count.
-- `GET /preview/:sessionId?token=...`: consumes the one-time preview bootstrap token and serves the preview shell.
-- `GET /assets/browser-preview.js`: serves the browser client.
+- `GET /preview/:sessionId?token=...`: consumes the one-time preview bootstrap token and serves the preview shell (non-cacheable, Host/Origin validated).
+- `GET /assets/browser-preview.js`: serves the browser client (WebSocket lifecycle and event handling).
+- `GET /assets/render-preview.js`: serves the render replacement logic (scroll-preserving DOM updates).
 - `GET /assets/preview.css`: serves preview styles.
 
-Phase 2 owns stable render/session/export routes.
+Phase 4+ will add stable render/session/export routes.
 
 ## WebSocket
 
-- `GET /ws/:sessionId?token=...`: opens a token-gated browser channel using the browser token embedded in the preview shell.
-- `preview:status`: lifecycle status.
-- `preview:update`: rendered payload.
+- `GET /ws/:sessionId?token=...`: opens a token-gated browser channel with Host/Origin validation; uses the browser token embedded in the preview shell.
+- `preview:status`: lifecycle status (e.g., connected, file changed).
+- `preview:update`: rendered HTML payload.
 - `preview:error`: render error while preserving previous preview state.
+
+Rich copy operations (selection and full document as text/html + text/plain) are handled client-side with clipboard sanitization.
 
 ## Security Defaults
 

@@ -8,7 +8,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: Complete
 - Goal: create the external browser preview experience and make rich formatted copy the strongest MVP feature.
 
 ## Key Insights
@@ -36,7 +36,7 @@ Browser modules:
 - `rich-copy.ts`: clone selected rendered DOM and write ClipboardItem.
 - `plain-text-copy.ts`: fallback extraction.
 - `scroll-state.ts`: preserve scroll and optional source-line anchor scroll.
-- `preview-toolbar.ts`: actions for copy, refresh, open exported HTML later.
+- `preview-toolbar.ts`: actions for copy now; refresh/export actions stay in later phases once reloadable session behavior exists.
 - `preview.css`: readable themes matching Crossnote themes.
 
 Rich copy flow:
@@ -69,12 +69,14 @@ User selection -> clone rendered DOM fragment -> inline/retain required styles -
 
 ## Todo List
 
-- [ ] Build preview shell and WebSocket client.
-- [ ] Implement stable render replacement.
-- [ ] Implement rich copy selection.
-- [ ] Implement rich copy full document.
-- [ ] Add copy fallbacks and browser compatibility tests.
-- [ ] Add error display that preserves last good render.
+- [x] Build preview shell and WebSocket client.
+- [x] Implement stable render replacement.
+- [x] Implement rich copy selection.
+- [x] Implement rich copy full document.
+- [x] Add copy fallbacks and deterministic browser-client tests.
+- [x] Add error display that preserves last good render.
+
+**Note:** Manual browser destination compatibility testing (e.g., Google Docs, Word, Slack) deferred to Phase 7 integration testing.
 
 ## Success Criteria
 
@@ -100,5 +102,6 @@ User selection -> clone rendered DOM fragment -> inline/retain required styles -
 
 ## Next Steps
 
-- Phase 5 expands renderer feature coverage.
-- Phase 6 audits copied HTML and preview payload safety.
+- Phase 4 launches this browser client from Zed tasks/extension wiring.
+- Phase 5 expands renderer feature coverage (tables, footnotes, KaTeX, Mermaid enhancements).
+- Phase 7 includes manual browser destination compatibility testing (Google Docs, Word, Slack, notion, etc.).

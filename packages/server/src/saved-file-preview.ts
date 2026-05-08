@@ -1,6 +1,7 @@
 import { open } from "node:fs/promises";
 import { MAX_SOURCE_BYTES } from "./contracts.js";
 import type { RenderPayload } from "./contracts.js";
+import { renderMarkdown } from "./crossnote-renderer.js";
 import { resolveWorkspaceFile } from "./path-safety.js";
 
 export async function renderSavedFile(input: {
@@ -16,11 +17,11 @@ export async function renderSavedFile(input: {
   });
   const markdown = await readUtf8FileWithinLimit(resolved.filePath, maxBytes);
 
-  return {
-    html: `<article class="markdown-preview"><pre>${escapeHtml(markdown)}</pre></article>`,
+  return renderMarkdown({
+    markdown,
     sourcePath: resolved.filePath,
-    diagnostics: []
-  };
+    workspaceRoot: resolved.workspaceRoot
+  });
 }
 
 async function readUtf8FileWithinLimit(filePath: string, maxBytes: number): Promise<string> {
@@ -38,13 +39,4 @@ async function readUtf8FileWithinLimit(filePath: string, maxBytes: number): Prom
   } finally {
     await handle.close();
   }
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }

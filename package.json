@@ -5,13 +5,13 @@
   "description": "Secure browser-based Markdown Preview Enhanced workflow for Zed.",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://github.com/harris1111/markdown-enhanced#readme",
+  "homepage": "https://github.com/aitan111121/markdown-enhanced#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/harris1111/markdown-enhanced.git"
+    "url": "git+https://github.com/aitan111121/markdown-enhanced.git"
   },
   "bugs": {
-    "url": "https://github.com/harris1111/markdown-enhanced/issues"
+    "url": "https://github.com/aitan111121/markdown-enhanced/issues"
   },
   "bin": {
     "zed-mpe": "packages/server/dist/cli.js"

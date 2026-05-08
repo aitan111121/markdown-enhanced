@@ -4,7 +4,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
 import { logSecurityEvent } from "./audit-log.js";
-import { DEFAULT_HOST, SERVICE_NAME, type RenderPayload } from "./contracts.js";
+import {
+  DEFAULT_HOST,
+  MAX_JSON_BODY_BYTES,
+  SERVICE_NAME,
+  type PreviewSession,
+  type RenderPayload,
+  type SourceVersion
+} from "./contracts.js";
 import { FileWatchService } from "./file-watch-service.js";
 import { createHtmlExport, getHtmlExportFileName } from "./html-export-service.js";
 import { assertAllowedBindHost, isAllowedRequest } from "./origin-policy.js";
@@ -13,6 +20,7 @@ import { buildPreviewUrl } from "./preview-url.js";
 import { renderSavedFile } from "./saved-file-preview.js";
 import { getCustomStylePath, resolveExistingCustomStylePath } from "./safe-custom-style.js";
 import { isTokenMatch } from "./server-token.js";
+import { applyDraftMarkdown, renderDraftMarkdown } from "./source-draft-service.js";
 import { createPreviewShell } from "./static-preview-shell.js";
 import { randomToken, WorkspaceSessionStore } from "./workspace-session-store.js";
 import {
@@ -371,6 +379,77 @@ async function handleRequest(
     return;
   }
 
+  if (request.method === "POST" && requestUrl.pathname === "/api/source/render-draft") {
+    let body: Record<string, unknown>;
+    try {
+      body = await readJsonBody(request, MAX_JSON_BODY_BYTES);
+    } catch {
+      sendJson(response, 400, { error: "invalid_request" });
+      return;
+    }
+
+    const session = getAuthenticatedSession(context, body.sessionId, body.token, "invalid_draft_token");
+    if (!session) {
+      sendJson(response, 401, { error: "invalid_session" });
+      return;
+    }
+
+    if (typeof body.markdown !== "string") {
+      sendJson(response, 400, { error: "invalid_request" });
+      return;
+    }
+
+    try {
+      sendJson(response, 200, await renderDraftMarkdown({
+        workspaceRoot: session.workspaceRoot,
+        filePath: session.filePath,
+        markdown: body.markdown
+      }));
+    } catch (error) {
+      sendJson(response, 400, { error: "draft_render_failed", message: safeErrorMessage(error) });
+    }
+
+    return;
+  }
+
+  if (request.method === "POST" && requestUrl.pathname === "/api/source/apply-draft") {
+    let body: Record<string, unknown>;
+    try {
+      body = await readJsonBody(request, MAX_JSON_BODY_BYTES);
+    } catch {
+      sendJson(response, 400, { error: "invalid_request" });
+      return;
+    }
+
+    const session = getAuthenticatedSession(context, body.sessionId, body.token, "invalid_draft_token");
+    if (!session) {
+      sendJson(response, 401, { error: "invalid_session" });
+      return;
+    }
+
+    if (typeof body.markdown !== "string" || !isSourceVersion(body.baseVersion)) {
+      sendJson(response, 400, { error: "invalid_request" });
+      return;
+    }
+
+    try {
+      sendJson(response, 200, await applyDraftMarkdown({
+        workspaceRoot: session.workspaceRoot,
+        filePath: session.filePath,
+        markdown: body.markdown,
+        baseVersion: body.baseVersion
+      }));
+    } catch (error) {
+      const message = safeErrorMessage(error);
+      sendJson(response, message.includes("changed after this draft") ? 409 : 400, {
+        error: message.includes("changed after this draft") ? "stale_source" : "draft_apply_failed",
+        message
+      });
+    }
+
+    return;
+  }
+
   if (request.method === "GET" && requestUrl.pathname === "/assets/browser-preview.js") {
     await sendAsset(response, "../../browser-preview/dist/index.js", "text/javascript; charset=utf-8");
     return;
@@ -433,7 +512,16 @@ function getBoundPort(server: ReturnType<typeof createServer>, fallbackPort: num
 }
 
 function isBrowserAllowedPort(port: number): boolean {
-  return !BROWSER_BLOCKED_PORTS.has(port) && (port < 6665 || port > 6669);
+  if (BROWSER_BLOCKED_PORTS.has(port) || (port >= 6665 && port <= 6669)) {
+    return false;
+  }
+
+  try {
+    new Request(`http://127.0.0.1:${port}/`);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 const BROWSER_BLOCKED_PORTS = new Set([
@@ -450,15 +538,34 @@ function hasControlToken(request: IncomingMessage, controlToken: string): boolea
   return typeof value === "string" && isTokenMatch(controlToken, value);
 }
 
-async function readJsonBody(request: IncomingMessage): Promise<Record<string, unknown>> {
+function getAuthenticatedSession(
+  context: RequestContext,
+  sessionId: unknown,
+  token: unknown,
+  eventType: "invalid_export_token" | "invalid_draft_token"
+): PreviewSession | undefined {
+  if (typeof sessionId !== "string" || typeof token !== "string") {
+    return undefined;
+  }
+
+  const session = context.sessions.getSession(sessionId);
+  if (!session || !isTokenMatch(session.socketToken, token)) {
+    logSecurityEvent({ type: eventType, sessionId, reason: "Browser session token mismatch" });
+    return undefined;
+  }
+
+  return session;
+}
+
+async function readJsonBody(request: IncomingMessage, maxBytes = 8192): Promise<Record<string, unknown>> {
   const chunks: Buffer[] = [];
   let sizeBytes = 0;
 
   for await (const chunk of request) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk));
     sizeBytes += buffer.length;
-    if (sizeBytes > 8192) {
-      throw new Error("Request body exceeds 8192 bytes");
+    if (sizeBytes > maxBytes) {
+      throw new Error(`Request body exceeds ${maxBytes} bytes`);
     }
 
     chunks.push(buffer);
@@ -526,4 +633,26 @@ function pathsEqual(left: string, right: string): boolean {
   return process.platform === "win32"
     ? normalizedLeft.toLowerCase() === normalizedRight.toLowerCase()
     : normalizedLeft === normalizedRight;
+}
+
+function isSourceVersion(value: unknown): value is SourceVersion {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<SourceVersion>;
+  return (
+    typeof candidate.hash === "string" &&
+    /^[a-f0-9]{64}$/i.test(candidate.hash) &&
+    typeof candidate.mtimeMs === "number" &&
+    Number.isFinite(candidate.mtimeMs) &&
+    typeof candidate.sizeBytes === "number" &&
+    Number.isInteger(candidate.sizeBytes) &&
+    candidate.sizeBytes >= 0
+  );
+}
+
+function safeErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.replace(/[?&](token|previewToken|socketToken|controlToken)=[^\s&]+/gi, "$1=<redacted>");
 }

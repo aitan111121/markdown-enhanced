@@ -11,7 +11,7 @@
 ## Overview
 
 - Priority: P2
-- Status: Pending
+- Status: Complete
 - Goal: prepare docs and contracts for future Zed webview/panel support while keeping implementation external-browser-only today.
 
 ## Key Insights
@@ -66,11 +66,11 @@ Only contracts and docs are in scope for this phase.
 
 ## Todo List
 
-- [ ] Write webview evolution doc.
-- [ ] Update architecture/contracts with adapter boundary.
-- [ ] Update security docs with surface-independent invariants.
-- [ ] Update feature parity and roadmap wording.
-- [ ] Confirm no speculative native claims remain.
+- [x] Write webview evolution doc.
+- [x] Update architecture/contracts with adapter boundary.
+- [x] Update security docs with surface-independent invariants.
+- [x] Update feature parity and roadmap wording.
+- [x] Confirm no speculative native claims remain.
 
 ## Success Criteria
 

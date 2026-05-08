@@ -1,5 +1,5 @@
 import { request } from "node:http";
-import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -316,6 +316,73 @@ describe("startPreviewServer", () => {
     expect(response.status).toBe(401);
   });
 
+  it("renders and applies browser drafts with session token and stale checks", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
+    servers.push(server);
+
+    const { sessionId, token } = await consumePreviewSession(server.url);
+    const draftRender = await fetch(`http://127.0.0.1:${server.port}/api/source/render-draft`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId, token, markdown: "# Draft\n\nUpdated" })
+    });
+    const draftPayload = await draftRender.json() as { html: string; sourceVersion: unknown };
+
+    expect(draftRender.status).toBe(200);
+    expect(draftPayload.html).toContain("Draft");
+
+    const apply = await fetch(`http://127.0.0.1:${server.port}/api/source/apply-draft`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId, token, markdown: "# Applied", baseVersion: draftPayload.sourceVersion })
+    });
+    const applyBody = await apply.json() as { backupFileName: string };
+
+    expect(apply.status).toBe(200);
+    expect(applyBody.backupFileName).toContain("zed-mpe-backup");
+    await expect(readFile(filePath, "utf8")).resolves.toBe("# Applied");
+  });
+
+  it("blocks stale browser draft applies", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
+    servers.push(server);
+
+    const { sessionId, token } = await consumePreviewSession(server.url);
+    const draftRender = await fetch(`http://127.0.0.1:${server.port}/api/source/render-draft`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId, token, markdown: "# Draft" })
+    });
+    const draftPayload = await draftRender.json() as { sourceVersion: unknown };
+    await writeFile(filePath, "# External");
+
+    const apply = await fetch(`http://127.0.0.1:${server.port}/api/source/apply-draft`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId, token, markdown: "# Browser", baseVersion: draftPayload.sourceVersion })
+    });
+
+    expect(apply.status).toBe(409);
+    await expect(readFile(filePath, "utf8")).resolves.toBe("# External");
+  });
+
+  it("rejects browser draft APIs without the session token", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
+    servers.push(server);
+
+    const { sessionId } = await consumePreviewSession(server.url);
+    const response = await fetch(`http://127.0.0.1:${server.port}/api/source/render-draft`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId, token: "wrong", markdown: "# Draft" })
+    });
+
+    expect(response.status).toBe(401);
+  });
+
   it("rejects encoded traversal through the session control endpoint", async () => {
     const { workspace, filePath } = await makeWorkspace();
     const server = await startPreviewServer({
@@ -389,4 +456,16 @@ async function writeCustomStyle(workspace: string, contents: string): Promise<st
   const stylePath = path.join(crossnoteDir, "style.less");
   await writeFile(stylePath, contents);
   return stylePath;
+}
+
+async function consumePreviewSession(url: string): Promise<{ sessionId: string; token: string }> {
+  const previewHtml = await fetch(url).then((response) => response.text());
+  const sessionId = previewHtml.match(/data-session-id="([^"]+)"/)?.[1];
+  const token = previewHtml.match(/data-token="([^"]+)"/)?.[1];
+
+  if (!sessionId || !token) {
+    throw new Error("Preview session token not found");
+  }
+
+  return { sessionId, token };
 }

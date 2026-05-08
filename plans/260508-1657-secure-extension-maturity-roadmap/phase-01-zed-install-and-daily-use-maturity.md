@@ -11,7 +11,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: Complete
 - Goal: make the current CLI plus Zed task workflow reliable, debuggable, and honest for real users.
 
 ## Key Insights
@@ -61,12 +61,12 @@ The implementation should improve entry-path reliability around the existing con
 
 ## Todo List
 
-- [ ] Audit CLI and server-reuse diagnostics.
-- [ ] Document pre-CLI task/PATH failures.
-- [ ] Add missing diagnostic branches.
-- [ ] Update setup/troubleshooting docs.
-- [ ] Extend smoke/manual validation checklist.
-- [ ] Validate package and Zed task launch paths.
+- [x] Audit CLI and server-reuse diagnostics.
+- [x] Document pre-CLI task/PATH failures.
+- [x] Add missing diagnostic branches.
+- [x] Update setup/troubleshooting docs.
+- [x] Extend smoke/manual validation checklist.
+- [x] Validate package and Zed task launch paths.
 
 ## Success Criteria
 

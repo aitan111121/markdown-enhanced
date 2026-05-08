@@ -30,7 +30,14 @@
     "docs/security.md",
     "docs/threat-model.md",
     "docs/feature-parity.md",
-    "docs/release-checklist.md"
+    "docs/release-checklist.md",
+    "docs/integration-guide.md",
+    "docs/roadmap.md",
+    "docs/webview-evolution.md",
+    "docs/development-roadmap.md",
+    "docs/distribution-strategy.md",
+    "docs/system-architecture.md",
+    "docs/implementation-contracts.md"
   ],
   "workspaces": [
     "packages/server",

@@ -10,7 +10,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: Complete
 - Goal: make the external browser preview a better docs review surface with secure TOC/sidebar navigation, status, diagnostics, copy, and export feedback.
 
 ## Key Insights
@@ -63,13 +63,13 @@ Payload changes should be optional and backward-compatible.
 
 ## Todo List
 
-- [ ] Audit current toolbar and diagnostics behavior.
-- [ ] Add status model and UI.
-- [ ] Add generated TOC/sidebar from existing payload or headings.
-- [ ] Add left/right/collapsed TOC behavior.
-- [ ] Add safe heading anchor/copy-link behavior.
-- [ ] Strengthen copy/export feedback.
-- [ ] Add tests for no token leakage and no destructive render errors.
+- [x] Audit current toolbar and diagnostics behavior.
+- [x] Add status model and UI.
+- [x] Add generated TOC/sidebar from existing payload or headings.
+- [x] Add left/right/collapsed TOC behavior.
+- [x] Add safe heading anchor/copy-link behavior.
+- [x] Strengthen copy/export feedback.
+- [x] Add tests for no token leakage and no destructive render errors.
 
 ## Success Criteria
 

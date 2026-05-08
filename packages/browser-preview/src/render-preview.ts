@@ -3,10 +3,23 @@ import {
   restoreScrollState,
   type ScrollState,
 } from "./scroll-state.js";
+import { copyHeadingFragment, type TocEntry } from "./preview-toc.js";
+
+export type LinkDiagnostic = {
+  status: string;
+  severity: "info" | "warning" | "error";
+  kind: "link" | "image" | "reference";
+  target: string;
+  line: number;
+  message: string;
+};
 
 export interface RenderOptions {
   preserveScroll: boolean;
   diagnostics?: string[];
+  linkDiagnostics?: LinkDiagnostic[];
+  toc?: TocEntry[];
+  onHeadingLinkCopied?: (success: boolean) => void;
 }
 
 let lastGoodHtml = "";
@@ -23,7 +36,9 @@ export function renderPreview(
   }
 
   container.innerHTML = html;
-  renderDiagnostics(container, options.diagnostics ?? []);
+  ensureHeadingIds(container, options.toc ?? []);
+  installHeadingAnchors(container, options.onHeadingLinkCopied);
+  renderDiagnostics(container, options.diagnostics ?? [], options.linkDiagnostics ?? []);
   lastGoodHtml = html;
 
   if (scrollState) {
@@ -67,16 +82,93 @@ export function clearErrors(container: HTMLElement): void {
   }
 }
 
-function renderDiagnostics(container: HTMLElement, diagnostics: string[]): void {
-  if (diagnostics.length === 0) {
+function renderDiagnostics(
+  container: HTMLElement,
+  diagnostics: string[],
+  linkDiagnostics: LinkDiagnostic[]
+): void {
+  const actionableLinks = linkDiagnostics.filter((diagnostic) => diagnostic.severity !== "info");
+  if (diagnostics.length === 0 && actionableLinks.length === 0) {
     return;
   }
 
   const banner = document.createElement("div");
   banner.className = "preview-diagnostics-banner";
   banner.setAttribute("role", "status");
-  banner.textContent = diagnostics.join(" ");
+
+  if (diagnostics.length > 0) {
+    const paragraph = document.createElement("p");
+    paragraph.textContent = diagnostics.join(" ");
+    banner.appendChild(paragraph);
+  }
+
+  if (actionableLinks.length > 0) {
+    const list = document.createElement("ul");
+    for (const diagnostic of actionableLinks.slice(0, 10)) {
+      const item = document.createElement("li");
+      item.textContent = `Line ${diagnostic.line}: ${diagnostic.target} - ${diagnostic.message}`;
+      list.appendChild(item);
+    }
+    banner.appendChild(list);
+  }
+
   container.prepend(banner);
+}
+
+function ensureHeadingIds(container: HTMLElement, toc: TocEntry[]): void {
+  const byText = new Map(toc.map((entry) => [`${entry.level}:${entry.text}`, entry.slug]));
+  const used = new Set<string>();
+
+  for (const heading of Array.from(container.querySelectorAll<HTMLElement>("h1,h2,h3,h4,h5,h6"))) {
+    const level = Number(heading.tagName.slice(1));
+    const text = heading.textContent?.trim() ?? "heading";
+    const candidate = heading.id || byText.get(`${level}:${text}`) || slugify(text);
+    heading.id = uniqueSlug(candidate, used);
+  }
+}
+
+function installHeadingAnchors(
+  container: HTMLElement,
+  onHeadingLinkCopied?: (success: boolean) => void
+): void {
+  for (const heading of Array.from(container.querySelectorAll<HTMLElement>("h1,h2,h3,h4,h5,h6"))) {
+    const slug = heading.id;
+    if (!slug) {
+      continue;
+    }
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "heading-anchor-button";
+    button.textContent = "#";
+    button.title = "Copy heading fragment";
+    button.addEventListener("click", async () => {
+      onHeadingLinkCopied?.(await copyHeadingFragment(slug));
+    });
+    heading.appendChild(button);
+  }
+}
+
+function uniqueSlug(slug: string, used: Set<string>): string {
+  const base = slug || "heading";
+  let candidate = base;
+  let suffix = 2;
+  while (used.has(candidate)) {
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  used.add(candidate);
+  return candidate;
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim();
 }
 
 function escapeHtml(text: string): string {

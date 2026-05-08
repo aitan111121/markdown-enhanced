@@ -1,5 +1,15 @@
 # Project Changelog
 
+## 2026-05-08 Secure Extension Maturity Roadmap
+
+- Added stable CLI diagnostics for missing browser assets, invalid workspace/file input, browser-blocked ports, stale server reuse, and browser launch failures while redacting tokenized URLs during normal `--open` launches.
+- Added a browser contents sidebar with left/right browser-local placement, heading fragment copy, stable diagnostics display, and copy/export sanitization that excludes preview UI chrome.
+- Added passive workspace link diagnostics for local Markdown/image links with non-throwing contained path classification, no remote fetches, unsafe scheme reporting, and token/path redaction tests.
+- Added explicit browser draft editing with draft preview, session-token apply endpoint, size caps, source version checks, serialized in-process applies, final stale re-check before replacement, backup creation, and atomic replacement.
+- Added docs-team integration, public roadmap, webview evolution, updated security review process, release matrix, feature parity, and package docs inclusion.
+- Fixed browser-safe port selection by rejecting ports that the Fetch URL parser blocks even when the OS assigns them through `--port 0`.
+- Validation: lint, typecheck, build, test, package smoke, package dry run passed; audit remains the documented Crossnote transitive no-fix baseline.
+
 ## 2026-05-08 Phase 6-8 Release Readiness
 
 - Added token helper functions with fixed-time comparison and moved Host/Origin validation into a dedicated localhost-only policy module.

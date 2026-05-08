@@ -11,8 +11,11 @@ export function sanitizeHtmlFragmentForClipboard(element: HTMLElement): string {
 export function removeNonContentNodes(root: HTMLElement): void {
   const selectors = [
     ".preview-toolbar",
+    ".preview-toc",
+    ".draft-editor-panel",
     ".preview-error-banner",
     ".preview-diagnostics-banner",
+    ".heading-anchor-button",
     "script",
     "style",
     "noscript"

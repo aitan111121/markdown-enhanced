@@ -254,6 +254,22 @@ describe("sanitizeHtmlForClipboard", () => {
     expect(html).toContain("Actual content");
   });
 
+  it("removes preview navigation and draft controls from copied fragments", () => {
+    testContainer.innerHTML = `
+      <aside class="preview-toc">Contents</aside>
+      <section class="draft-editor-panel">Draft editor</section>
+      <h2>Heading <button class="heading-anchor-button">#</button></h2>
+      <p>Actual content</p>
+    `;
+
+    const html = sanitizeHtmlForClipboard(testContainer);
+
+    expect(html).not.toContain("Contents");
+    expect(html).not.toContain("Draft editor");
+    expect(html).not.toContain("heading-anchor-button");
+    expect(html).toContain("Actual content");
+  });
+
   it("removes URL schemes hidden with whitespace controls", () => {
     testContainer.innerHTML = '<a href="java\nscript:alert(1)">Hidden</a>';
 

@@ -14,7 +14,10 @@ export function createPreviewShell(session: PreviewSession): string {
       <strong>Markdown Preview Enhanced</strong>
       <span id="preview-status">Connecting</span>
     </header>
-    <main id="preview-root" class="preview-root" aria-live="polite"></main>
+    <div class="preview-workspace">
+      <aside id="preview-toc" class="preview-toc" aria-label="Document contents"></aside>
+      <main id="preview-root" class="preview-root" aria-live="polite"></main>
+    </div>
     <script type="module" src="/assets/browser-preview.js"></script>
   </body>
 </html>`;

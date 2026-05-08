@@ -10,7 +10,7 @@
 ## Overview
 
 - Priority: P2
-- Status: Pending
+- Status: Complete
 - Goal: add passive local Markdown/image link diagnostics for docs teams without building a full knowledge graph.
 
 ## Key Insights
@@ -58,13 +58,13 @@ The link diagnostic path must be independent from rendering success. Rendering s
 
 ## Todo List
 
-- [ ] Define link diagnostic contract.
-- [ ] Implement safe local link extraction/resolution.
-- [ ] Add non-throwing contained candidate resolver.
-- [ ] Add browser diagnostic display.
-- [ ] Add path-safety regression tests.
-- [ ] Add docs explaining passive diagnostics.
-- [ ] Add diagnostic redaction and copy/export exclusion tests.
+- [x] Define link diagnostic contract.
+- [x] Implement safe local link extraction/resolution.
+- [x] Add non-throwing contained candidate resolver.
+- [x] Add browser diagnostic display.
+- [x] Add path-safety regression tests.
+- [x] Add docs explaining passive diagnostics.
+- [x] Add diagnostic redaction and copy/export exclusion tests.
 
 ## Success Criteria
 

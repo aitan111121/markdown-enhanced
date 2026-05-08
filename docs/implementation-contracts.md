@@ -52,6 +52,8 @@ Rich copy operations (selection and full document as text/html + text/plain) are
 - Reject files above the source size cap.
 - Enforce a strict preview-shell Content Security Policy with no inline script.
 - Keep script execution, custom parser JavaScript, public bind, and run-all-code-chunks disabled by default.
+- Detect runnable code-chunk fences and report diagnostics; do not execute them in `0.1.0`, even if a future trust config file exists.
 - Initialize Crossnote through the safe adapter only: server-owned temporary notebook root, disabled script execution, disabled render-time code chunks, inert parser hooks, disabled HTML5 embed, disabled remote diagram services, escaped `@import` directives, post-render preview HTML hardening, empty custom header/global CSS, and markdown-it fallback diagnostics on render failure.
 - Load only a CSS-scoped `.crossnote/style.less` subset: contained path, 64 KiB cap, preview-root selectors only, no CSS escapes, no function-like tokens, no `@import`, no `url(...)`, no executable CSS patterns, and CSP nonce application in the browser.
 - Generate HTML exports from the existing sanitized `RenderPayload`; do not call Crossnote `htmlExport()` or accept export paths from the browser.
+- Reject UNC-style paths, malformed percent encoding, encoded traversal, and symlink escapes outside the workspace.

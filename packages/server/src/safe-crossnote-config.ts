@@ -32,7 +32,7 @@ export function getSafeCrossnoteConfig(): Partial<NotebookConfig> {
     breakOnSingleNewLine: true,
     enableTypographer: true,
     enableLinkify: true,
-    protocolsWhiteList: "http://, https://, file://, mailto:, tel:",
+    protocolsWhiteList: "http://, https://, mailto:, tel:",
     mathRenderingOption: "KaTeX",
     frontMatterRenderingOption: "table",
     mermaidTheme: "default",
@@ -86,6 +86,18 @@ export function assertSafeConfig(config: SafeMarkdownConfig): void {
 
   if (config.crossnote.HTML5EmbedIsAllowedHttp) {
     throw new Error("Crossnote HTML5 embed HTTP fetches must be disabled by default");
+  }
+
+  if (config.crossnote.includeInHeader || config.crossnote.globalCss) {
+    throw new Error("Crossnote custom header and global CSS must be empty by default");
+  }
+
+  if (typeof config.crossnote.protocolsWhiteList === "string" && config.crossnote.protocolsWhiteList.toLowerCase().includes("file://")) {
+    throw new Error("Crossnote file URL protocols must be disabled by default");
+  }
+
+  if (config.crossnote.plantumlServer || config.crossnote.krokiServer || config.crossnote.webSequenceDiagramsServer) {
+    throw new Error("Crossnote remote diagram services must be disabled by default");
   }
 
   if (config.crossnote.parserConfig) {

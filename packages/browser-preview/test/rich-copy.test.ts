@@ -241,4 +241,25 @@ describe("sanitizeHtmlForClipboard", () => {
     expect(html).toContain("Secret");
     expect(html).toContain("Local");
   });
+
+  it("removes diagnostic banners from copied fragments", () => {
+    testContainer.innerHTML = `
+      <div class="preview-diagnostics-banner">Code chunk execution is disabled</div>
+      <p>Actual content</p>
+    `;
+
+    const html = sanitizeHtmlForClipboard(testContainer);
+
+    expect(html).not.toContain("Code chunk execution is disabled");
+    expect(html).toContain("Actual content");
+  });
+
+  it("removes URL schemes hidden with whitespace controls", () => {
+    testContainer.innerHTML = '<a href="java\nscript:alert(1)">Hidden</a>';
+
+    const html = sanitizeHtmlForClipboard(testContainer);
+
+    expect(html).toContain("Hidden");
+    expect(html).not.toContain("java");
+  });
 });

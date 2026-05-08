@@ -4,8 +4,10 @@ import { mkdtemp } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { evaluateCodeChunkGate } from "./code-chunk-gate.js";
 import type { RenderPayload, TocEntry } from "./contracts.js";
 import { getSafeMarkdownConfig } from "./safe-crossnote-config.js";
+import { sanitizeServerHtml } from "./server-html-sanitizer.js";
 import type { MarkdownEngineOutput, Notebook } from "crossnote";
 
 type RendererCache = {
@@ -35,6 +37,11 @@ export async function renderMarkdown(input: {
   const config = getSafeMarkdownConfig();
   const renderer = await getOrCreateRenderer(input.workspaceRoot, config);
   const diagnostics: string[] = [];
+  const codeChunkGate = await evaluateCodeChunkGate({
+    markdown: input.markdown,
+    workspaceRoot: input.workspaceRoot
+  });
+  diagnostics.push(...codeChunkGate.diagnostics);
 
   try {
     if (renderer.notebook) {
@@ -50,7 +57,7 @@ export async function renderMarkdown(input: {
     }
 
     diagnostics.push("Crossnote unavailable; rendered with safe markdown-it fallback");
-    const html = sanitizePreviewHtml(renderer.fallbackEngine.render(input.markdown));
+    const html = sanitizeServerHtml(renderer.fallbackEngine.render(input.markdown));
     const plainText = extractPlainText(html);
     const toc = extractToc(input.markdown);
 
@@ -68,7 +75,7 @@ export async function renderMarkdown(input: {
     diagnostics.push("Crossnote render failed; rendered with safe markdown-it fallback");
 
     try {
-      const html = sanitizePreviewHtml(renderer.fallbackEngine.render(input.markdown));
+      const html = sanitizeServerHtml(renderer.fallbackEngine.render(input.markdown));
       const plainText = extractPlainText(html);
       const toc = extractToc(input.markdown);
 
@@ -185,7 +192,7 @@ function buildPayloadFromCrossnoteOutput(
   sourcePath: string,
   diagnostics: string[]
 ): RenderPayload {
-  const html = sanitizePreviewHtml(output.html);
+  const html = sanitizeServerHtml(output.html);
   const plainText = extractPlainText(html);
   const toc = extractTocFromHtml(html);
 
@@ -317,17 +324,6 @@ function disableCrossnoteImports(markdown: string): string {
       return line;
     })
     .join("");
-}
-
-function sanitizePreviewHtml(html: string): string {
-  return html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "")
-    .replace(/<(?:object|embed|applet)\b[^>]*>[\s\S]*?<\/(?:object|embed|applet)>/gi, "")
-    .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/\s+srcdoc\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(/\s+(href|src|action|formaction|xlink:href)\s*=\s*("|')\s*(?:javascript|vbscript)\s*:[\s\S]*?\2/gi, "");
 }
 
 function wrapInArticle(html: string): string {

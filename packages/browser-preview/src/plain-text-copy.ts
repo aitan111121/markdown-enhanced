@@ -15,6 +15,7 @@ function removeUnwantedNodes(root: HTMLElement): void {
     "style",
     "noscript",
     ".preview-error-banner",
+    ".preview-diagnostics-banner",
     ".preview-toolbar",
   ];
 

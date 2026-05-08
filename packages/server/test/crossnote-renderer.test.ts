@@ -1,12 +1,13 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearRendererCache, renderMarkdown } from "../src/crossnote-renderer.js";
 
 const tempRoots: string[] = [];
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   clearRendererCache();
   await Promise.all(tempRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
@@ -171,6 +172,19 @@ describe("renderMarkdown", () => {
     expect(result.html).not.toContain("Example Domain");
     expect(result.html).toContain("https://example.com/");
     expect(result.diagnostics).toContain("Crossnote import directives are disabled by default");
+  });
+
+  it("warns and keeps runnable code chunks disabled", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const workspace = await makeTempRoot();
+    const result = await renderMarkdown({
+      markdown: "```js {cmd=true}\nconsole.log('should-not-run')\n```",
+      sourcePath: path.join(workspace, "chunk.md"),
+      workspaceRoot: workspace
+    });
+
+    expect(result.diagnostics).toContain("Code chunk execution is disabled by default");
+    expect(result.html).toContain("should-not-run");
   });
 
   it("handles render errors gracefully", async () => {

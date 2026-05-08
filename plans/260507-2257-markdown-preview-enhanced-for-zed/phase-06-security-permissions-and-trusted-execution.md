@@ -9,19 +9,21 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
-- Goal: enforce the security baseline from Phase 0 and only then allow optional trusted execution features.
+- Status: Complete
+- Goal: enforce the security baseline from Phase 0 and keep optional trusted execution blocked until a separate post-MVP security review.
 
 ## Key Insights
 
 - MPE code chunks can run arbitrary commands. That is useful and dangerous.
 - Zed capability prompts and task execution already surface some risk, but the preview server must enforce its own policy.
 - A local browser server still needs token, origin, and path protections.
+- `0.1.0` detects runnable code chunks and shows diagnostics, but never executes them.
+- The passive trust config reader is groundwork only; it does not enable execution in this release.
 
 ## Requirements
 
 - Default code chunk execution off.
-- Require explicit per-workspace trusted setting before running code chunks.
+- Require explicit per-workspace trusted setting before any future code chunk execution.
 - Never auto-run chunks on open or save unless trust and config both allow it.
 - Bind server to localhost by default.
 - Reject files outside workspace root.
@@ -31,18 +33,19 @@
 - Reject DNS rebinding-style hosts and public bind addresses.
 - Sanitize rendered/copy HTML where server/browser can control it.
 - Log security-relevant events without leaking secrets.
+- For `0.1.0`, block runnable code chunks even when a future trust config file exists.
 
 ## Architecture
 
 Security modules:
 
-- `trusted-workspace-policy.ts`: reads trust config and decides if execution is allowed.
-- `code-chunk-gate.ts`: blocks execution unless policy allows it.
-- `server-token.ts`: generates per-server/session tokens.
+- `trusted-workspace-policy.ts`: reads passive trust config for future execution design.
+- `code-chunk-gate.ts`: detects runnable code fences and blocks execution in release builds.
+- `server-token.ts`: generates and compares per-server/session tokens.
 - `origin-policy.ts`: validates browser requests.
 - `path-safety.ts`: extends Phase 2 validation with Windows, symlink, junction, UNC, and encoded traversal tests.
-- `safe-html.ts`: strips script/event handlers from copy fragments.
-- `audit-log.ts`: records trust changes and blocked execution attempts.
+- `safe-html.ts`: strips script/event handlers, diagnostic banners, unsafe URLs, and tokens from copy fragments.
+- `audit-log.ts`: records blocked security events without token values.
 
 Trust model:
 
@@ -52,13 +55,13 @@ default deny -> workspace opt-in -> explicit user action -> run code chunk
 
 ## Related Code Files
 
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\trusted-workspace-policy.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\code-chunk-gate.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\server-token.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\origin-policy.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\browser-preview\src\safe-html.ts`.
-- Create `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\audit-log.ts`.
-- Modify `F:\Windows\Study\Selfhost\zed-extension\extension.toml` for final capabilities.
+- Created `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\trusted-workspace-policy.ts`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\code-chunk-gate.ts`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\server-token.ts`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\origin-policy.ts`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\packages\browser-preview\src\safe-html.ts`.
+- Created `F:\Windows\Study\Selfhost\zed-extension\packages\server\src\audit-log.ts`.
+- Modified `F:\Windows\Study\Selfhost\zed-extension\extension.toml` for the `0.1.0` release version; no broad capabilities were added.
 
 ## Implementation Steps
 
@@ -74,19 +77,19 @@ default deny -> workspace opt-in -> explicit user action -> run code chunk
 
 ## Todo List
 
-- [ ] Implement trusted workspace policy.
-- [ ] Gate all code chunk execution.
-- [ ] Add server and WebSocket session tokens.
-- [ ] Add origin/path validation tests.
-- [ ] Add DNS rebinding, token replay, symlink, junction, UNC, encoded traversal, and Windows case tests.
-- [ ] Sanitize copied HTML fragments.
-- [ ] Audit final Zed capabilities.
+- [x] Implement passive trusted workspace policy.
+- [x] Gate all code chunk execution for `0.1.0`.
+- [x] Add server, preview, export, control, and WebSocket token checks.
+- [x] Add origin/path validation tests.
+- [x] Add DNS rebinding-style Host/Origin, token replay, symlink, UNC, and encoded traversal tests.
+- [x] Sanitize copied HTML fragments.
+- [x] Audit final Zed capabilities; keep the extension minimal.
 
 ## Success Criteria
 
 - Opening a malicious Markdown file cannot execute commands by default.
-- Attempted code chunk execution is blocked with a clear message when untrusted.
-- Trusted execution requires explicit per-workspace opt-in.
+- Attempted code chunk execution is blocked with a clear diagnostic.
+- Trusted execution remains post-MVP and requires explicit per-workspace opt-in before any future enablement.
 - External origins cannot connect to the local preview session without token.
 - Path traversal tests fail safely.
 - Token replay and forged WebSocket tests fail safely.
@@ -108,4 +111,4 @@ default deny -> workspace opt-in -> explicit user action -> run code chunk
 
 ## Next Steps
 
-- Phase 7 validates security behavior with automated tests and manual threat checks.
+- Phase 7 validates security behavior with automated tests, package smoke, and manual release checks.

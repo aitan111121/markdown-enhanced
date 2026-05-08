@@ -1,5 +1,6 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import type { PreviewSession } from "./contracts.js";
+import { createServerToken, isTokenMatch } from "./server-token.js";
 
 export class WorkspaceSessionStore {
   readonly #sessions = new Map<string, PreviewSession>();
@@ -38,7 +39,7 @@ export class WorkspaceSessionStore {
 
   consumePreviewToken(sessionId: string, token: string | null): PreviewSession | undefined {
     const session = this.#sessions.get(sessionId);
-    if (!session || session.previewTokenUsed || session.previewToken !== token) {
+    if (!session || session.previewTokenUsed || !isTokenMatch(session.previewToken, token)) {
       return undefined;
     }
 
@@ -48,5 +49,5 @@ export class WorkspaceSessionStore {
 }
 
 export function randomToken(): string {
-  return randomBytes(32).toString("base64url");
+  return createServerToken();
 }

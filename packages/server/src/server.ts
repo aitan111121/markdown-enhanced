@@ -3,13 +3,16 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
+import { logSecurityEvent } from "./audit-log.js";
 import { DEFAULT_HOST, SERVICE_NAME, type RenderPayload } from "./contracts.js";
 import { FileWatchService } from "./file-watch-service.js";
 import { createHtmlExport, getHtmlExportFileName } from "./html-export-service.js";
+import { assertAllowedBindHost, isAllowedRequest } from "./origin-policy.js";
 import { resolveWorkspaceFile } from "./path-safety.js";
 import { buildPreviewUrl } from "./preview-url.js";
 import { renderSavedFile } from "./saved-file-preview.js";
 import { getCustomStylePath, resolveExistingCustomStylePath } from "./safe-custom-style.js";
+import { isTokenMatch } from "./server-token.js";
 import { createPreviewShell } from "./static-preview-shell.js";
 import { randomToken, WorkspaceSessionStore } from "./workspace-session-store.js";
 import {
@@ -36,7 +39,7 @@ export type StartedPreviewServer = {
 
 export async function startPreviewServer(options: PreviewServerOptions): Promise<StartedPreviewServer> {
   const host = options.host ?? DEFAULT_HOST;
-  assertAllowedHost(host);
+  assertAllowedBindHost(host);
 
   if (options.port !== 0 && !isBrowserAllowedPort(options.port)) {
     throw new Error(`Port ${options.port} is blocked by browsers. Use --port 0 or another local port.`);
@@ -106,6 +109,7 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
   const server = createServer(async (request, response) => {
     try {
       if (!isAllowedRequest(request)) {
+        logSecurityEvent({ type: "blocked_request", reason: "HTTP Host or Origin was not local" });
         sendJson(response, 403, { error: "forbidden" });
         return;
       }
@@ -140,12 +144,14 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
     }
 
     if (!isAllowedRequest(request)) {
+      logSecurityEvent({ type: "blocked_request", reason: "WebSocket Host or Origin was not local" });
       socket.destroy();
       return;
     }
 
     const previewSession = sessions.getSession(match[1]);
-    if (!previewSession || previewSession.socketToken !== requestUrl.searchParams.get("token")) {
+    if (!previewSession || !isTokenMatch(previewSession.socketToken, requestUrl.searchParams.get("token"))) {
+      logSecurityEvent({ type: "invalid_websocket_token", sessionId: match[1], reason: "WebSocket token mismatch" });
       socket.destroy();
       return;
     }
@@ -282,6 +288,7 @@ async function handleRequest(
 
   if (request.method === "POST" && requestUrl.pathname === "/sessions") {
     if (!hasControlToken(request, context.controlToken)) {
+      logSecurityEvent({ type: "invalid_control_token", reason: "Control token mismatch" });
       sendJson(response, 403, { error: "forbidden" });
       return;
     }
@@ -299,10 +306,17 @@ async function handleRequest(
       return;
     }
 
-    const resolved = await resolveWorkspaceFile({
-      workspacePath: context.workspaceRoot,
-      filePath: body.filePath
-    });
+    let resolved: Awaited<ReturnType<typeof resolveWorkspaceFile>>;
+    try {
+      resolved = await resolveWorkspaceFile({
+        workspacePath: context.workspaceRoot,
+        filePath: body.filePath
+      });
+    } catch {
+      sendJson(response, 400, { error: "invalid_file" });
+      return;
+    }
+
     const session = context.sessions.createSession(resolved);
     sendJson(response, 200, {
       url: buildPreviewUrl({
@@ -319,6 +333,7 @@ async function handleRequest(
   if (request.method === "GET" && previewMatch) {
     const session = context.sessions.consumePreviewToken(previewMatch[1], requestUrl.searchParams.get("token"));
     if (!session) {
+      logSecurityEvent({ type: "invalid_preview_token", sessionId: previewMatch[1], reason: "Preview token mismatch or replay" });
       sendJson(response, 401, { error: "invalid_session" });
       return;
     }
@@ -342,7 +357,8 @@ async function handleRequest(
     }
 
     const session = context.sessions.getSession(body.sessionId);
-    if (!session || session.socketToken !== body.token) {
+    if (!session || !isTokenMatch(session.socketToken, body.token)) {
+      logSecurityEvent({ type: "invalid_export_token", sessionId: body.sessionId, reason: "Export token mismatch" });
       sendJson(response, 401, { error: "invalid_session" });
       return;
     }
@@ -429,48 +445,9 @@ const BROWSER_BLOCKED_PORTS = new Set([
   6697, 10080
 ]);
 
-function assertAllowedHost(host: string): void {
-  if (host !== DEFAULT_HOST) {
-    throw new Error(`Public bind is disabled by default. Use ${DEFAULT_HOST}.`);
-  }
-}
-
-function isAllowedRequest(request: IncomingMessage): boolean {
-  return isAllowedHostHeader(request.headers.host) && isAllowedOriginHeader(request.headers.origin);
-}
-
-function isAllowedHostHeader(value: string | string[] | undefined): boolean {
-  if (typeof value !== "string") {
-    return false;
-  }
-
-  try {
-    const host = new URL(`http://${value}`).hostname;
-    return host === DEFAULT_HOST || host === "localhost";
-  } catch {
-    return false;
-  }
-}
-
-function isAllowedOriginHeader(value: string | string[] | undefined): boolean {
-  if (typeof value === "undefined") {
-    return true;
-  }
-
-  if (typeof value !== "string") {
-    return false;
-  }
-
-  try {
-    const origin = new URL(value);
-    return (origin.protocol === "http:" || origin.protocol === "https:") && isAllowedHostHeader(origin.host);
-  } catch {
-    return false;
-  }
-}
-
 function hasControlToken(request: IncomingMessage, controlToken: string): boolean {
-  return request.headers[CONTROL_TOKEN_HEADER] === controlToken;
+  const value = request.headers[CONTROL_TOKEN_HEADER];
+  return typeof value === "string" && isTokenMatch(controlToken, value);
 }
 
 async function readJsonBody(request: IncomingMessage): Promise<Record<string, unknown>> {

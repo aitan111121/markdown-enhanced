@@ -1,7 +1,7 @@
 ---
 title: "Markdown Preview Enhanced for Zed"
 description: "Build a Zed workflow that launches a secure Crossnote-powered local browser preview with rich formatted copy."
-status: in-progress
+status: complete
 priority: P1
 effort: 11w
 issue:
@@ -50,9 +50,9 @@ No unfinished existing plans found. Workspace was empty at creation time.
 | 3 | [Browser Preview and Rich Copy](./phase-03-browser-preview-and-rich-copy.md) | Complete | 1.5w |
 | 4 | [Zed Launch Integration](./phase-04-zed-extension-launch-integration.md) | Complete | 1w |
 | 5 | [MPE Tier One Rendering and Export](./phase-05-mpe-tier-one-rendering-and-export.md) | Complete | 1.5w |
-| 6 | [Security Permissions and Trusted Execution](./phase-06-security-permissions-and-trusted-execution.md) | Pending | 1w |
-| 7 | [Testing Packaging and Release](./phase-07-testing-packaging-and-release.md) | Pending | 1w |
-| 8 | [Enhanced Parity Roadmap](./phase-08-enhanced-parity-roadmap.md) | Pending | ongoing |
+| 6 | [Security Permissions and Trusted Execution](./phase-06-security-permissions-and-trusted-execution.md) | Complete | 1w |
+| 7 | [Testing Packaging and Release](./phase-07-testing-packaging-and-release.md) | Complete | 1w |
+| 8 | [Enhanced Parity Roadmap](./phase-08-enhanced-parity-roadmap.md) | Complete | ongoing |
 
 ## Parallel Strategy
 
@@ -61,9 +61,10 @@ No unfinished existing plans found. Workspace was empty at creation time.
 - Phase 2 is complete: the secure saved-file server initializes a Crossnote notebook per workspace, renders through `getNoteMarkdownEngine()`, and keeps markdown-it as the safe fallback path.
 - Phase 3 is complete: the browser preview client consumes server payloads, preserves scroll, and supports rich/plain copy.
 - Phase 4 is complete: the Zed task/keybinding path launches or reuses the per-workspace browser preview.
-- Phase 5 is complete: Tier 1 fixture coverage, safe custom CSS, and session-token HTML export are implemented; Phase 6 completes hardening and trusted execution design.
-- Phase 7 is the final integration gate.
-- Phase 8 is post-MVP expansion.
+- Phase 5 is complete: Tier 1 fixture coverage, safe custom CSS, and session-token HTML export are implemented.
+- Phase 6 is complete: release hardening keeps code execution disabled, adds passive trust/code-chunk diagnostics, extracts localhost origin policy, hardens token/path checks, and expands security tests.
+- Phase 7 is complete: release metadata, license/notices, security/release docs, package smoke automation, and Zed dev-extension checklist are ready for validation.
+- Phase 8 is complete as roadmap: the parity matrix documents supported, partial, deferred, and security-review features for post-MVP planning.
 
 ## Key Dependencies
 

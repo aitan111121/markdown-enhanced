@@ -13,6 +13,9 @@ export async function resolveWorkspaceFile(input: {
   filePath: string;
   maxBytes?: number;
 }): Promise<ResolvedWorkspaceFile> {
+  assertSafePathInput(input.workspacePath);
+  assertSafePathInput(input.filePath);
+
   const workspaceRoot = await realpath(input.workspacePath);
   const candidate = path.isAbsolute(input.filePath)
     ? input.filePath
@@ -34,6 +37,14 @@ export async function resolveWorkspaceFile(input: {
   return { workspaceRoot, filePath, sizeBytes: fileStat.size };
 }
 
+export function assertSafePathInput(value: string): void {
+  if (isUncPath(value)) {
+    throw new Error(`UNC paths are not supported for preview targets: ${value}`);
+  }
+
+  assertNoEncodedPathControl(value);
+}
+
 export function assertPathInside(workspaceRoot: string, candidatePath: string): void {
   const root = normalizeForContainment(workspaceRoot);
   const candidate = normalizeForContainment(candidatePath);
@@ -49,4 +60,26 @@ export function assertPathInside(workspaceRoot: string, candidatePath: string): 
 function normalizeForContainment(value: string): string {
   const resolved = path.resolve(value);
   return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+
+function assertNoEncodedPathControl(value: string): void {
+  let decoded: string;
+
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    throw new Error(`Path contains malformed percent encoding: ${value}`);
+  }
+
+  if (decoded === value) {
+    return;
+  }
+
+  if (decoded.includes("..") || decoded.includes("/") || decoded.includes("\\")) {
+    throw new Error(`Path contains encoded traversal characters: ${value}`);
+  }
+}
+
+function isUncPath(value: string): boolean {
+  return /^\\\\[^\\]/.test(value) || /^\/\/[^/]/.test(value);
 }

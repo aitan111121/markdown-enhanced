@@ -1,5 +1,15 @@
 # Project Changelog
 
+## 2026-05-08 Phase 6-8 Release Readiness
+
+- Added token helper functions with fixed-time comparison and moved Host/Origin validation into a dedicated localhost-only policy module.
+- Hardened path input handling for UNC-style paths, malformed percent encoding, encoded traversal, and symlink escapes outside the workspace.
+- Added passive trusted-workspace policy and code-chunk gate modules; runnable code chunks now produce diagnostics and remain blocked in `0.1.0`.
+- Added security audit logging for blocked requests and invalid preview, WebSocket, export, and control tokens without logging token values.
+- Moved browser clipboard HTML sanitization into a focused `safe-html` module and strips diagnostic banners from copied fragments.
+- Added root npm package release metadata, `zed-mpe` binary mapping, package file allowlist, MIT license, third-party notices, release smoke script, and Zed release checklist.
+- Added `docs/security.md` and `docs/feature-parity.md` to document the release security model and post-MVP MPE parity tracks.
+
 ## 2026-05-08 Phase 5 Tier One Rendering and Export
 
 - Added a Tier 1 Markdown fixture covering front matter, TOC headings, tables, task lists, footnotes, KaTeX, Mermaid, and code blocks.

@@ -1,6 +1,6 @@
 id = "markdown-preview-enhanced"
 name = "Markdown Preview Enhanced"
-version = "0.0.1"
+version = "0.1.0"
 schema_version = 1
 authors = ["Minh An"]
 description = "Open saved Markdown files in a secure local browser preview with rich copy support."

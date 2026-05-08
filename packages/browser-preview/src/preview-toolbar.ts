@@ -1,4 +1,9 @@
-import { copySelection, copyFullDocument, type CopyResult } from "./rich-copy.js";
+import {
+  createElementClipboardPayload,
+  createSelectionClipboardPayload,
+  writeClipboardPayload,
+  type CopyResult
+} from "./rich-copy.js";
 import type { HtmlExportResult } from "./html-export.js";
 
 export function initializeToolbar(
@@ -8,19 +13,6 @@ export function initializeToolbar(
 ): void {
   const actionsContainer = document.createElement("div");
   actionsContainer.className = "toolbar-actions";
-
-  const copySelectionBtn = createButton("Copy Selection", async () => {
-    const result = await copySelection();
-    showCopyFeedback(actionsContainer, result);
-  });
-
-  const copyDocumentBtn = createButton("Copy Document", async () => {
-    const result = await copyFullDocument(previewRoot);
-    showCopyFeedback(actionsContainer, result);
-  });
-
-  actionsContainer.appendChild(copySelectionBtn);
-  actionsContainer.appendChild(copyDocumentBtn);
 
   if (options.exportHtml) {
     const exportHtmlBtn = createButton("Export HTML", async () => {
@@ -36,7 +28,8 @@ export function initializeToolbar(
 
   toolbarElement.appendChild(actionsContainer);
 
-  setupKeyboardShortcuts(previewRoot);
+  setupCopyBehavior(previewRoot, actionsContainer);
+  setupPreviewFocus(previewRoot);
 }
 
 function createButton(label: string, onClick: () => void): HTMLButtonElement {
@@ -98,15 +91,32 @@ function showActionFeedback(container: HTMLElement, message: string, success: bo
   }, 3000);
 }
 
-function setupKeyboardShortcuts(previewRoot: HTMLElement): void {
-  document.addEventListener("keydown", async (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === "c") {
-      event.preventDefault();
-      const result = await copyFullDocument(previewRoot);
-      const toolbar = document.querySelector(".toolbar-actions");
-      if (toolbar instanceof HTMLElement) {
-        showCopyFeedback(toolbar, result);
-      }
+function setupCopyBehavior(previewRoot: HTMLElement, feedbackContainer: HTMLElement): void {
+  document.addEventListener("copy", (event) => {
+    const payload = event.clipboardData
+      ? createSelectionClipboardPayload(previewRoot) ?? createFocusedDocumentPayload(previewRoot)
+      : undefined;
+    if (!payload || !event.clipboardData) {
+      return;
     }
+
+    event.preventDefault();
+    writeClipboardPayload(event.clipboardData, payload);
+    showCopyFeedback(feedbackContainer, { success: true, method: "rich" });
   });
+}
+
+function setupPreviewFocus(previewRoot: HTMLElement): void {
+  previewRoot.addEventListener("pointerdown", () => {
+    previewRoot.focus({ preventScroll: true });
+  });
+}
+
+function createFocusedDocumentPayload(previewRoot: HTMLElement) {
+  const selection = window.getSelection();
+  if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+    return undefined;
+  }
+
+  return document.activeElement === previewRoot ? createElementClipboardPayload(previewRoot) : undefined;
 }

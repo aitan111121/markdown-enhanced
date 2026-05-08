@@ -31,6 +31,7 @@ type DraftState = {
   panel: HTMLElement;
   textarea: HTMLTextAreaElement;
   baseVersion: SourceVersion;
+  host: HTMLElement;
 };
 
 export function initializeDraftEditor(options: DraftEditorOptions): void {
@@ -49,13 +50,17 @@ async function startDraft(options: DraftEditorOptions): Promise<void> {
     return;
   }
 
-  const existing = document.querySelector(".draft-editor-panel");
+  const host = getDraftHost(options.previewRoot);
+  const existing = Array.from(host.children).find(
+    (child): child is HTMLElement => child instanceof HTMLElement && child.dataset.draftEditor === "true"
+  );
   if (existing) {
     existing.remove();
   }
 
-  const state = createDraftPanel(latest.sourceText, latest.sourceVersion);
-  options.previewRoot.before(state.panel);
+  const state = createDraftPanel(latest.sourceText, latest.sourceVersion, host);
+  host.classList.add("draft-active");
+  host.insertBefore(state.panel, options.previewRoot);
   options.onStatus("Draft editing");
 
   state.panel.querySelector<HTMLButtonElement>("[data-draft-render]")?.addEventListener("click", async () => {
@@ -69,16 +74,17 @@ async function startDraft(options: DraftEditorOptions): Promise<void> {
     });
   });
   state.panel.querySelector<HTMLButtonElement>("[data-draft-discard]")?.addEventListener("click", () => {
-    state.panel.remove();
+    closeDraft(state);
     options.onStatus("Draft discarded");
   });
   updateDraftSummary(state);
   state.textarea.addEventListener("input", () => updateDraftSummary(state));
 }
 
-function createDraftPanel(sourceText: string, baseVersion: SourceVersion): DraftState {
+function createDraftPanel(sourceText: string, baseVersion: SourceVersion, host: HTMLElement): DraftState {
   const panel = document.createElement("section");
   panel.className = "draft-editor-panel";
+  panel.dataset.draftEditor = "true";
   panel.innerHTML = `
     <div class="draft-editor-header">
       <strong>Draft</strong>
@@ -93,7 +99,7 @@ function createDraftPanel(sourceText: string, baseVersion: SourceVersion): Draft
   `;
   const textarea = panel.querySelector<HTMLTextAreaElement>("textarea")!;
   textarea.value = sourceText;
-  return { panel, textarea, baseVersion };
+  return { panel, textarea, baseVersion, host };
 }
 
 async function renderDraft(options: DraftEditorOptions, state: DraftState): Promise<void> {
@@ -119,8 +125,18 @@ async function applyDraft(options: DraftEditorOptions, state: DraftState): Promi
     }
   );
   state.baseVersion = result.sourceVersion;
-  state.panel.remove();
+  closeDraft(state);
   options.onStatus(`Draft applied; backup ${result.backupFileName}`);
+}
+
+function closeDraft(state: DraftState): void {
+  state.panel.remove();
+  state.host.classList.remove("draft-active");
+}
+
+function getDraftHost(previewRoot: HTMLElement): HTMLElement {
+  const host = previewRoot.closest<HTMLElement>(".preview-main");
+  return host ?? previewRoot.parentElement ?? previewRoot;
 }
 
 async function postJson<T>(url: string, body: Record<string, unknown>): Promise<T> {

@@ -40,7 +40,7 @@ The first release focuses on the useful, low-trust parts of that workflow:
 - **Local browser preview**: opens a tokenized `127.0.0.1` URL instead of embedding a webview.
 - **Save-based updates**: watches the saved file and pushes updates to the browser over WebSocket.
 - **Crossnote-backed rendering**: supports common MPE-style Markdown output with a safe `markdown-it` fallback.
-- **Rich copy**: copy the current selection or full rendered document as HTML plus plain text.
+- **Rich copy**: select rendered content and press `Ctrl+C`/`Cmd+C` to copy HTML plus plain text.
 - **HTML export**: download a sanitized standalone HTML file from the browser toolbar.
 - **Custom preview CSS**: load a restricted `.crossnote/style.less` CSS subset for workspace styling.
 - **Per-workspace server reuse**: repeated launches reuse the existing local preview server when possible.
@@ -126,7 +126,7 @@ Then use the extension like this:
 2. Press your task keybinding, or run `task: spawn` and choose `MPE Preview Current File`.
 3. A browser preview opens with a one-time local session token.
 4. Save the Markdown file to refresh the preview.
-5. Use the browser toolbar to copy rich content, export HTML, open a generated contents sidebar, or draft small edits.
+5. Select rendered content and press `Ctrl+C`/`Cmd+C` for rich copy, or use the browser toolbar to export HTML and draft small edits.
 
 The first preview launch starts a small server task for the workspace. Later launches reuse that server and exit quickly after opening a new browser URL. Stop the Zed task terminal to stop the preview server.
 

@@ -26,7 +26,7 @@ Daily use:
 2. Press the configured task keybinding.
 3. The task saves the current file, starts or reuses the workspace preview server, and opens a fresh tokenized browser URL.
 4. Save the Markdown file to refresh the preview.
-5. Use the browser toolbar to copy rich content, export HTML, navigate the contents sidebar, or start an explicit draft edit.
+5. Select rendered content and press `Ctrl+C`/`Cmd+C` for rich copy, or use the browser toolbar to export HTML and start an explicit draft edit.
 
 The first launch keeps a small server task running for that workspace. Later launches reuse it and exit quickly after opening a new preview URL. Stop the Zed task terminal to stop the preview server.
 
@@ -74,11 +74,13 @@ The contents sidebar is generated from sanitized heading metadata or rendered he
 
 Heading copy buttons copy fragment-only links such as `#usage`, not tokenized preview URLs.
 
+Rendered text selection uses the browser's normal copy command. Select content in the preview and press `Ctrl+C` or `Cmd+C`; the preview writes sanitized `text/html` and `text/plain` clipboard data. If the preview itself is focused and no text is selected, the same copy command copies the full rendered document.
+
 Passive link diagnostics classify local Markdown and image links without mutating files or fetching remote URLs. Remote links are marked as remote only. Unsupported schemes such as `file:`, `data:`, and executable script schemes are reported as unsafe.
 
 ## Draft Editing
 
-Draft editing is read-only by default. Select `Edit Draft`, make a small Markdown change in the browser, choose `Preview Draft`, then `Apply Draft` only when the preview looks right.
+Draft editing is read-only by default and opens inline in the preview column. Select `Edit Draft`, make a small Markdown change in the browser, choose `Preview Draft`, then `Apply Draft` only when the preview looks right.
 
 Apply requests are token-gated and write only the current preview file. The server rejects stale source content, oversized drafts, path escapes, malformed requests, and invalid tokens. A backup file is created next to the source before replacement.
 

@@ -104,4 +104,4 @@ User selection -> clone rendered DOM fragment -> inline/retain required styles -
 
 - Phase 4 launches this browser client from Zed tasks/extension wiring.
 - Phase 5 expands renderer feature coverage (tables, footnotes, KaTeX, Mermaid enhancements).
-- Phase 7 includes manual browser destination compatibility testing (Google Docs, Word, Slack, notion, etc.).
+- Phase 7 includes manual browser destination compatibility testing (Google Docs, Word, Slack, Notion, etc.).

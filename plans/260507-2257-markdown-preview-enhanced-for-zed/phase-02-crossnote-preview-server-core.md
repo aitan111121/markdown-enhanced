@@ -9,7 +9,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: In Progress
 - Goal: implement the Node CLI server that owns saved-file watching, secure Crossnote rendering, sessions, and browser delivery.
 
 ## Key Insights

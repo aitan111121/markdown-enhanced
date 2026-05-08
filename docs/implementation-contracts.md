@@ -6,6 +6,7 @@
 - Preview semantics: saved file only through task `save: "current"`.
 - Distribution: npm CLI package first; Zed extension-assisted install later.
 - Browser surface: external localhost preview.
+- Daily workflow target: one configured Zed keybinding/action opens or reuses preview; task picker and terminal launch are fallback/debug paths.
 
 ## CLI
 

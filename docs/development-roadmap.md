@@ -11,8 +11,8 @@ The active delivery map is [plans/260507-2257-markdown-preview-enhanced-for-zed/
 - Phase 2: Complete. Server core renders through Crossnote `Notebook.init()` and `getNoteMarkdownEngine()` with safe defaults, markdown-it fallback, file watching, WebSocket updates, and Host/Origin validation.
 - Phase 3: Complete. Browser client with scroll-preserving render, rich copy (selection + full document), and error handling complete.
 - Phase 4: Complete. Zed task/keybinding workflow, current-file save behavior, per-workspace server reuse, and launch diagnostics are implemented.
-- Phase 5: Next. Rendering/export parity work can now build on the completed Crossnote bridge.
-- Phases 6-8: Pending downstream security, release, and parity work.
+- Phase 5: Complete. Tier-one rendering fixtures, safe `.crossnote/style.less`, session-token HTML export, and toolbar export controls are implemented; PDF remains post-MVP.
+- Phases 6-8: Pending downstream security, release, and expanded parity work.
 
 ## MVP Gates
 

@@ -1,5 +1,14 @@
 # Project Changelog
 
+## 2026-05-08 Phase 5 Tier One Rendering and Export
+
+- Added a Tier 1 Markdown fixture covering front matter, TOC headings, tables, task lists, footnotes, KaTeX, Mermaid, and code blocks.
+- Added a conservative `.crossnote/style.less` CSS-only subset with path containment, a 64 KiB size cap, preview-scoped selectors, and rejection for imports, URL fetches, executable CSS patterns, and global selectors.
+- Added browser CSP nonce plumbing for dynamic custom preview styles.
+- Added `POST /api/export/html`, protected by the browser session token, to export the current saved preview as standalone sanitized HTML without accepting browser-provided file paths.
+- Added a browser toolbar `Export HTML` action with download and failure feedback.
+- Documented that PDF export, direct Crossnote export APIs, arbitrary `.crossnote/config.js`, `head.html`, parser hooks, PlantUML/GraphViz, and code chunks remain deferred.
+
 ## 2026-05-08 Phase 2 Crossnote Bridge
 
 - Added `crossnote@0.9.24` to the server package.

@@ -26,6 +26,8 @@
 - Point Crossnote at a server-owned temporary notebook root in Phase 2 so workspace `.crossnote/config.js` cannot re-enable unsafe features.
 - Escape Crossnote `@import` directives in Phase 2 so imports cannot bypass workspace containment, size caps, or remote fetch policy.
 - Post-filter preview HTML before browser delivery to remove active containers, inline event handlers, and executable URL attributes.
+- Load `.crossnote/style.less` as a CSS-only subset with realpath containment, a 64 KiB size cap, preview-scoped selectors, no CSS escapes, no function-like tokens, no imports, no URL fetches, and CSP nonce application.
+- Export HTML only from authenticated browser sessions; the browser cannot choose arbitrary source or destination paths.
 - Do not expose environment variables, secrets, or full internal errors to browser payloads.
 - Validate Host and Origin headers against localhost-only values for every HTTP and WebSocket route.
 - Sanitize rich-copy HTML fragments, stripping scripts, event handlers, and executable attributes.
@@ -36,6 +38,7 @@
 - Token replay tests.
 - Symlink, junction, UNC, encoded traversal, and Windows drive-case tests.
 - Crossnote dependency audit mitigation: `markdown-it-html5-embed` currently pulls nested `markdown-it@8.4.2` with no npm audit fix. Keep that feature surface unavailable from defaults, workspace config, and imports, then revisit dependency replacement or patching before release gates.
+- PDF export, Crossnote direct export APIs, arbitrary `.crossnote/config.js`, `head.html`, parser JS, and code chunk execution remain deferred until explicit trust and dependency audits exist.
 
 ## Phase 1 Gate
 

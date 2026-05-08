@@ -37,8 +37,9 @@ zed-mpe preview --workspace <path> --file <path> --port <number|0> --open --save
 - `GET /assets/browser-preview.js`: browser client WebSocket lifecycle and event handling.
 - `GET /assets/render-preview.js`: browser render replacement logic (scroll-preserving DOM updates).
 - `GET /assets/preview.css`: preview stylesheet.
+- `POST /api/export/html`: session-token HTML export for the current saved preview.
 
-Phase 5+ will add stable render/export routes.
+PDF export and direct Crossnote export APIs are deferred.
 
 ## Render Pipeline
 
@@ -49,6 +50,8 @@ Phase 5+ will add stable render/export routes.
 - Crossnote render calls are serialized per notebook cache entry before clearing shared engine caches.
 - Crossnote `@import` directives are escaped before parsing in Phase 2; contained import/resource support is deferred until a validated resolver exists.
 - Rendered preview HTML is post-filtered to remove active containers and executable attributes before wrapping in the browser payload.
+- The server optionally attaches sanitized `.crossnote/style.less` CSS to render payloads. The browser applies it with a CSP nonce and removes it when absent.
+- HTML exports reuse the sanitized render payload and inline base preview CSS plus any sanitized custom CSS.
 
 ## WebSocket Contract
 
@@ -63,6 +66,7 @@ Phase 5+ will add stable render/export routes.
 - Scroll-preserving preview updates on saved-file changes.
 - Rich copy: selection as text/html + text/plain.
 - Rich copy: full document as text/html + text/plain.
+- HTML export from the current authenticated preview session.
 - Clipboard sanitization stripping scripts and event handlers.
 - Error display without destroying current preview state.
 
@@ -74,5 +78,6 @@ Phase 5+ will add stable render/export routes.
 - Enforce source file size caps at path resolution and render time.
 - Keep script execution, custom parser JavaScript, public bind, and run-all-code-chunks disabled by default.
 - Keep Crossnote custom header/global CSS empty until Phase 5/6 safe subsets are implemented.
+- Allow only the Phase 5 CSS-only `.crossnote/style.less` subset; keep `.crossnote/config.js`, `head.html`, and parser JS ignored.
 - Ignore workspace `.crossnote/config.js` until Phase 5/6 implements explicit whitelists.
 - Keep Crossnote imports disabled until resource reads and remote fetches are routed through explicit policy checks.

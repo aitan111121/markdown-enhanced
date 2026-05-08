@@ -30,8 +30,9 @@ Required invariants:
 - `GET /assets/browser-preview.js`: serves the browser client (WebSocket lifecycle and event handling).
 - `GET /assets/render-preview.js`: serves the render replacement logic (scroll-preserving DOM updates).
 - `GET /assets/preview.css`: serves preview styles.
+- `POST /api/export/html`: browser-session-token endpoint that exports the current session's saved file as standalone sanitized HTML.
 
-Phase 5+ will add stable render/export routes.
+PDF export, direct Crossnote export APIs, and arbitrary local config/head/parser injection are deferred.
 
 ## WebSocket
 
@@ -52,3 +53,5 @@ Rich copy operations (selection and full document as text/html + text/plain) are
 - Enforce a strict preview-shell Content Security Policy with no inline script.
 - Keep script execution, custom parser JavaScript, public bind, and run-all-code-chunks disabled by default.
 - Initialize Crossnote through the safe adapter only: server-owned temporary notebook root, disabled script execution, disabled render-time code chunks, inert parser hooks, disabled HTML5 embed, disabled remote diagram services, escaped `@import` directives, post-render preview HTML hardening, empty custom header/global CSS, and markdown-it fallback diagnostics on render failure.
+- Load only a CSS-scoped `.crossnote/style.less` subset: contained path, 64 KiB cap, preview-root selectors only, no CSS escapes, no function-like tokens, no `@import`, no `url(...)`, no executable CSS patterns, and CSP nonce application in the browser.
+- Generate HTML exports from the existing sanitized `RenderPayload`; do not call Crossnote `htmlExport()` or accept export paths from the browser.

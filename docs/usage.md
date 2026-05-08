@@ -26,6 +26,7 @@ Daily use:
 2. Press the configured task keybinding.
 3. The task saves the current file, starts or reuses the workspace preview server, and opens a fresh tokenized browser URL.
 4. Save the Markdown file to refresh the preview.
+5. Use `Export HTML` in the browser toolbar to download a standalone HTML snapshot of the current saved preview.
 
 The first launch keeps a small server task running for that workspace. Later launches reuse it and exit quickly after opening a new preview URL. Stop the Zed task terminal to stop the preview server.
 
@@ -47,6 +48,12 @@ The preview task passes paths as arguments, not shell-concatenated strings:
 ```
 
 The task uses `save: "current"`, so MVP preview behavior is save-based. Unsaved-buffer streaming is not part of the MVP unless a later Zed API proof changes this decision.
+
+## Custom Preview CSS
+
+Create `.crossnote/style.less` in the workspace to apply a conservative CSS-only customization subset. Phase 5 treats the file as CSS text: rules must target `.markdown-preview` or `.preview-root`, and CSS escapes, function-like tokens, `@import`, `url(...)`, executable CSS patterns, global selectors, scripts, parser hooks, and `head.html` remain disabled.
+
+Changes to an existing `.crossnote/style.less` file refresh open previews and are included in HTML exports.
 
 ## Terminal Preview For Development
 

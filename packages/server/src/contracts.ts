@@ -15,6 +15,10 @@ export type RenderPayload = {
   plainText: string;
   sourcePath: string;
   diagnostics: string[];
+  customStyle?: {
+    css: string;
+    sourcePath: string;
+  };
   metadata?: {
     frontMatter?: Record<string, unknown>;
     toc?: TocEntry[];
@@ -31,6 +35,7 @@ export type PreviewSession = {
   id: string;
   previewToken: string;
   socketToken: string;
+  styleNonce: string;
   previewTokenUsed: boolean;
   workspaceRoot: string;
   filePath: string;

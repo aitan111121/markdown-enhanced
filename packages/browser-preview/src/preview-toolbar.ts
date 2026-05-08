@@ -1,8 +1,10 @@
 import { copySelection, copyFullDocument, type CopyResult } from "./rich-copy.js";
+import type { HtmlExportResult } from "./html-export.js";
 
 export function initializeToolbar(
   toolbarElement: HTMLElement,
-  previewRoot: HTMLElement
+  previewRoot: HTMLElement,
+  options: { exportHtml?: () => Promise<HtmlExportResult> } = {}
 ): void {
   const actionsContainer = document.createElement("div");
   actionsContainer.className = "toolbar-actions";
@@ -19,6 +21,18 @@ export function initializeToolbar(
 
   actionsContainer.appendChild(copySelectionBtn);
   actionsContainer.appendChild(copyDocumentBtn);
+
+  if (options.exportHtml) {
+    const exportHtmlBtn = createButton("Export HTML", async () => {
+      const result = await options.exportHtml!();
+      showActionFeedback(
+        actionsContainer,
+        result.success ? "HTML exported" : `Export failed${result.error ? `: ${result.error}` : ""}`,
+        result.success
+      );
+    });
+    actionsContainer.appendChild(exportHtmlBtn);
+  }
 
   toolbarElement.appendChild(actionsContainer);
 
@@ -59,6 +73,24 @@ function showCopyFeedback(
     feedback.classList.add("copy-feedback-error");
   }
 
+  container.appendChild(feedback);
+
+  setTimeout(() => {
+    feedback.remove();
+  }, 3000);
+}
+
+function showActionFeedback(container: HTMLElement, message: string, success: boolean): void {
+  const existing = container.querySelector(".copy-feedback");
+  if (existing) {
+    existing.remove();
+  }
+
+  const feedback = document.createElement("span");
+  feedback.className = `copy-feedback ${success ? "copy-feedback-success" : "copy-feedback-error"}`;
+  feedback.setAttribute("role", "status");
+  feedback.setAttribute("aria-live", "polite");
+  feedback.textContent = message;
   container.appendChild(feedback);
 
   setTimeout(() => {

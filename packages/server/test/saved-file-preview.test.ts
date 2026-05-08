@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -39,6 +39,28 @@ describe("renderSavedFile", () => {
 
     expect(result.metadata?.frontMatter).toMatchObject({ title: "Saved Probe" });
     expect(result.html).toContain("katex");
+  });
+
+  it("attaches safe workspace custom CSS", async () => {
+    const { root, filePath } = await writeTempFile("# Styled");
+    await mkdir(path.join(root, ".crossnote"));
+    await writeFile(path.join(root, ".crossnote", "style.less"), ".markdown-preview h1 { color: #2563eb; }");
+
+    const result = await renderSavedFile({ workspaceRoot: root, filePath });
+
+    expect(result.customStyle?.css).toContain(".markdown-preview h1");
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("reports unsafe custom CSS without attaching it", async () => {
+    const { root, filePath } = await writeTempFile("# Styled");
+    await mkdir(path.join(root, ".crossnote"));
+    await writeFile(path.join(root, ".crossnote", "style.less"), "body { display: none; }");
+
+    const result = await renderSavedFile({ workspaceRoot: root, filePath });
+
+    expect(result.customStyle).toBeUndefined();
+    expect(result.diagnostics).toContain("Custom style must target .markdown-preview or .preview-root selectors");
   });
 
   it("extracts table of contents from headings", async () => {

@@ -51,3 +51,4 @@ Rich copy operations (selection and full document as text/html + text/plain) are
 - Reject files above the source size cap.
 - Enforce a strict preview-shell Content Security Policy with no inline script.
 - Keep script execution, custom parser JavaScript, public bind, and run-all-code-chunks disabled by default.
+- Initialize Crossnote through the safe adapter only: server-owned temporary notebook root, disabled script execution, disabled render-time code chunks, inert parser hooks, disabled HTML5 embed, disabled remote diagram services, escaped `@import` directives, post-render preview HTML hardening, empty custom header/global CSS, and markdown-it fallback diagnostics on render failure.

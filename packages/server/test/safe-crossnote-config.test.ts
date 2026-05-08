@@ -23,6 +23,18 @@ describe("getSafeMarkdownConfig", () => {
 
     expect(config.html).toBe(false);
   });
+
+  it("disables Crossnote HTML5 embed and remote diagram services by default", () => {
+    const config = getSafeMarkdownConfig();
+
+    expect(config.crossnote.enableHTML5Embed).toBe(false);
+    expect(config.crossnote.HTML5EmbedUseImageSyntax).toBe(false);
+    expect(config.crossnote.HTML5EmbedUseLinkSyntax).toBe(false);
+    expect(config.crossnote.HTML5EmbedIsAllowedHttp).toBe(false);
+    expect(config.crossnote.plantumlServer).toBe("");
+    expect(config.crossnote.krokiServer).toBe("");
+    expect(config.crossnote.webSequenceDiagramsServer).toBe("");
+  });
 });
 
 describe("assertSafeConfig", () => {
@@ -48,5 +60,14 @@ describe("assertSafeConfig", () => {
     const config = { ...getSafeMarkdownConfig(), runAllCodeChunks: true as const };
 
     expect(() => assertSafeConfig(config as any)).toThrow("Code chunk execution must be disabled");
+  });
+
+  it("rejects config with Crossnote HTML5 embeds enabled", () => {
+    const config = {
+      ...getSafeMarkdownConfig(),
+      crossnote: { ...getSafeMarkdownConfig().crossnote, enableHTML5Embed: true }
+    };
+
+    expect(() => assertSafeConfig(config)).toThrow("Crossnote HTML5 embeds must be disabled");
   });
 });

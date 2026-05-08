@@ -1,11 +1,15 @@
 export function sanitizeHtmlFragmentForClipboard(element: HTMLElement): string {
+  return sanitizeElementForClipboard(element).innerHTML;
+}
+
+export function sanitizeElementForClipboard(element: HTMLElement): HTMLElement {
   const clone = element.cloneNode(true) as HTMLElement;
 
   removeNonContentNodes(clone);
   removeDangerousElements(clone);
   removeDangerousAttributes(clone);
 
-  return clone.innerHTML;
+  return clone;
 }
 
 export function removeNonContentNodes(root: HTMLElement): void {

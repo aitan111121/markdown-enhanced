@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { extractPlainText } from "../src/plain-text-copy.js";
-import { sanitizeHtmlForClipboard } from "../src/rich-copy.js";
+import { createElementClipboardPayload, sanitizeHtmlForClipboard } from "../src/rich-copy.js";
 
 describe("HTML Sanitization for Copy", () => {
   let testContainer: HTMLElement;
@@ -270,6 +270,25 @@ describe("sanitizeHtmlForClipboard", () => {
     expect(html).toContain("Actual content");
   });
 
+  it("keeps plain text aligned with sanitized preview content", () => {
+    testContainer.innerHTML = `
+      <div class="preview-diagnostics-banner">Diagnostic UI</div>
+      <object>Hidden object text</object>
+      <iframe>Hidden frame text</iframe>
+      <h2>Heading <button class="heading-anchor-button">#</button></h2>
+      <p>Actual <strong>content</strong></p>
+    `;
+
+    const payload = createElementClipboardPayload(testContainer);
+
+    expect(payload.plainText).toContain("Heading");
+    expect(payload.plainText).toContain("Actual content");
+    expect(payload.plainText).not.toContain("Diagnostic UI");
+    expect(payload.plainText).not.toContain("Hidden object text");
+    expect(payload.plainText).not.toContain("Hidden frame text");
+    expect(payload.plainText).not.toContain("#");
+  });
+
   it("removes URL schemes hidden with whitespace controls", () => {
     testContainer.innerHTML = '<a href="java\nscript:alert(1)">Hidden</a>';
 
@@ -277,5 +296,17 @@ describe("sanitizeHtmlForClipboard", () => {
 
     expect(html).toContain("Hidden");
     expect(html).not.toContain("java");
+  });
+});
+
+describe("createElementClipboardPayload", () => {
+  it("creates rich and plain payloads from rendered content", () => {
+    const testContainer = document.createElement("div");
+    testContainer.innerHTML = "<p>Rendered <strong>copy</strong></p>";
+
+    const payload = createElementClipboardPayload(testContainer);
+
+    expect(payload.plainText).toBe("Rendered copy");
+    expect(payload.html).toContain("<strong>copy</strong>");
   });
 });

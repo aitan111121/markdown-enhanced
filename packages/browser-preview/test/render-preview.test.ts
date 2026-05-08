@@ -107,25 +107,103 @@ describe("preview TOC", () => {
 });
 
 describe("initializeToolbar", () => {
-  it("does not add a reload refresh button for one-time preview URLs", () => {
+  it("does not add copy or reload buttons for one-time preview URLs", () => {
+    document.body.innerHTML = "";
     const toolbar = document.createElement("nav");
     const previewRoot = document.createElement("main");
+    previewRoot.innerHTML = "<p>Rendered copy</p>";
     document.body.appendChild(previewRoot);
 
     initializeToolbar(toolbar, previewRoot);
 
     const buttons = Array.from(toolbar.querySelectorAll("button"), (button) => button.textContent);
-    expect(buttons).toEqual(["Copy Selection", "Copy Document"]);
+    expect(buttons).toEqual([]);
   });
 
   it("adds an export button when export is configured", () => {
+    document.body.innerHTML = "";
     const toolbar = document.createElement("nav");
     const previewRoot = document.createElement("main");
 
     initializeToolbar(toolbar, previewRoot, { exportHtml: async () => ({ success: true }) });
 
     const buttons = Array.from(toolbar.querySelectorAll("button"), (button) => button.textContent);
-    expect(buttons).toEqual(["Copy Selection", "Copy Document", "Export HTML"]);
+    expect(buttons).toEqual(["Export HTML"]);
+  });
+
+  it("copies rendered selections through the default copy event", () => {
+    document.body.innerHTML = "";
+    const toolbar = document.createElement("nav");
+    const previewRoot = document.createElement("main");
+    previewRoot.innerHTML = "<article><p>Rendered <strong>selection</strong></p></article>";
+    document.body.appendChild(toolbar);
+    document.body.appendChild(previewRoot);
+    initializeToolbar(toolbar, previewRoot);
+    const range = document.createRange();
+    range.selectNodeContents(previewRoot.querySelector("p")!);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    const clipboardValues = new Map<string, string>();
+    const clipboardData = {
+      setData: (type: string, value: string) => clipboardValues.set(type, value),
+      getData: (type: string) => clipboardValues.get(type) ?? ""
+    } as DataTransfer;
+    const event = new Event("copy", { bubbles: true, cancelable: true }) as ClipboardEvent;
+    Object.defineProperty(event, "clipboardData", { value: clipboardData });
+
+    const canceled = !document.dispatchEvent(event);
+
+    expect(canceled).toBe(true);
+    expect(clipboardData.getData("text/plain")).toBe("Rendered selection");
+    expect(clipboardData.getData("text/html")).toContain("<strong>selection</strong>");
+    expect(toolbar.querySelector(".copy-feedback")?.textContent).toContain("Copied with formatting");
+  });
+
+  it("does not intercept copy events for selections outside the preview", () => {
+    document.body.innerHTML = "";
+    const toolbar = document.createElement("nav");
+    const outside = document.createElement("p");
+    outside.textContent = "Outside selection";
+    const previewRoot = document.createElement("main");
+    previewRoot.innerHTML = "<p>Preview content</p>";
+    document.body.appendChild(toolbar);
+    document.body.appendChild(outside);
+    document.body.appendChild(previewRoot);
+    initializeToolbar(toolbar, previewRoot);
+    const range = document.createRange();
+    range.selectNodeContents(outside);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    const clipboardData = createClipboardData();
+    const event = createCopyEvent(clipboardData);
+
+    const canceled = !document.dispatchEvent(event);
+
+    expect(canceled).toBe(false);
+    expect(clipboardData.getData("text/plain")).toBe("");
+  });
+
+  it("copies the rendered document when the focused preview has no selection", () => {
+    document.body.innerHTML = "";
+    const toolbar = document.createElement("nav");
+    const previewRoot = document.createElement("main");
+    previewRoot.tabIndex = 0;
+    previewRoot.innerHTML = "<article><h1>Title</h1><p>Body</p></article>";
+    document.body.appendChild(toolbar);
+    document.body.appendChild(previewRoot);
+    initializeToolbar(toolbar, previewRoot);
+    window.getSelection()?.removeAllRanges();
+    previewRoot.focus();
+    const clipboardData = createClipboardData();
+    const event = createCopyEvent(clipboardData);
+
+    const canceled = !document.dispatchEvent(event);
+
+    expect(canceled).toBe(true);
+    expect(clipboardData.getData("text/plain")).toContain("Title");
+    expect(clipboardData.getData("text/html")).toContain("<h1>Title</h1>");
   });
 });
 
@@ -190,9 +268,12 @@ describe("initializeDraftEditor", () => {
     const actions = document.createElement("div");
     actions.className = "toolbar-actions";
     toolbar.appendChild(actions);
+    const previewMain = document.createElement("section");
+    previewMain.className = "preview-main";
     const previewRoot = document.createElement("main");
+    previewMain.appendChild(previewRoot);
     document.body.appendChild(toolbar);
-    document.body.appendChild(previewRoot);
+    document.body.appendChild(previewMain);
     const onDraftRender = vi.fn();
     const onStatus = vi.fn();
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
@@ -221,11 +302,49 @@ describe("initializeDraftEditor", () => {
     editButton?.click();
     const renderButton = document.body.querySelector<HTMLButtonElement>("[data-draft-render]");
     expect(renderButton).toBeTruthy();
+    expect(previewMain.firstElementChild?.className).toBe("draft-editor-panel");
+    expect(previewMain.classList.contains("draft-active")).toBe(true);
     renderButton?.click();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(fetch).toHaveBeenCalledWith("/api/source/render-draft", expect.objectContaining({ method: "POST" }));
     expect(onDraftRender).toHaveBeenCalledWith(expect.objectContaining({ html: "<h1>Draft</h1>" }));
+  });
+
+  it("does not remove rendered content that uses the draft panel class", () => {
+    document.body.innerHTML = "";
+    const toolbar = document.createElement("nav");
+    const actions = document.createElement("div");
+    actions.className = "toolbar-actions";
+    toolbar.appendChild(actions);
+    const previewMain = document.createElement("section");
+    previewMain.className = "preview-main";
+    const previewRoot = document.createElement("main");
+    previewRoot.innerHTML = '<section class="draft-editor-panel">Rendered class collision</section>';
+    previewMain.appendChild(previewRoot);
+    document.body.appendChild(toolbar);
+    document.body.appendChild(previewMain);
+
+    initializeDraftEditor({
+      sessionId: "session",
+      token: "token",
+      toolbarElement: toolbar,
+      previewRoot,
+      getLatestPayload: () => ({
+        html: previewRoot.innerHTML,
+        diagnostics: [],
+        sourceText: "# Source",
+        sourceVersion: { hash: "b".repeat(64), mtimeMs: 1, sizeBytes: 8 }
+      }),
+      onDraftRender: vi.fn(),
+      onStatus: vi.fn()
+    });
+
+    actions.querySelector<HTMLButtonElement>("button")?.click();
+
+    expect(previewRoot.textContent).toContain("Rendered class collision");
+    expect(previewMain.querySelectorAll(".draft-editor-panel")).toHaveLength(2);
+    expect(previewMain.firstElementChild?.getAttribute("data-draft-editor")).toBe("true");
   });
 
   it("allows draft mode for an empty saved Markdown file", () => {
@@ -234,8 +353,11 @@ describe("initializeDraftEditor", () => {
     const actions = document.createElement("div");
     actions.className = "toolbar-actions";
     toolbar.appendChild(actions);
+    const previewMain = document.createElement("section");
+    previewMain.className = "preview-main";
     const previewRoot = document.createElement("main");
-    document.body.appendChild(previewRoot);
+    previewMain.appendChild(previewRoot);
+    document.body.appendChild(previewMain);
 
     initializeDraftEditor({
       sessionId: "session",
@@ -255,5 +377,20 @@ describe("initializeDraftEditor", () => {
     actions.querySelector<HTMLButtonElement>("button")?.click();
 
     expect(document.querySelector<HTMLTextAreaElement>(".draft-editor-textarea")?.value).toBe("");
+    expect(previewMain.classList.contains("draft-active")).toBe(true);
   });
 });
+
+function createClipboardData(): DataTransfer {
+  const clipboardValues = new Map<string, string>();
+  return {
+    setData: (type: string, value: string) => clipboardValues.set(type, value),
+    getData: (type: string) => clipboardValues.get(type) ?? ""
+  } as DataTransfer;
+}
+
+function createCopyEvent(clipboardData: DataTransfer): ClipboardEvent {
+  const event = new Event("copy", { bubbles: true, cancelable: true }) as ClipboardEvent;
+  Object.defineProperty(event, "clipboardData", { value: clipboardData });
+  return event;
+}

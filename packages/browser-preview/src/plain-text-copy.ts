@@ -3,10 +3,7 @@ export function extractPlainText(element: HTMLElement): string {
 
   removeUnwantedNodes(clone);
 
-  const lines: string[] = [];
-  extractTextRecursive(clone, lines);
-
-  return lines.join("\n").trim();
+  return normalizePlainText(extractTextRecursive(clone));
 }
 
 function removeUnwantedNodes(root: HTMLElement): void {
@@ -17,6 +14,15 @@ function removeUnwantedNodes(root: HTMLElement): void {
     ".preview-error-banner",
     ".preview-diagnostics-banner",
     ".preview-toolbar",
+    ".preview-toc",
+    ".draft-editor-panel",
+    ".heading-anchor-button",
+    "iframe",
+    "object",
+    "embed",
+    "link",
+    "base",
+    "meta",
   ];
 
   for (const selector of selectors) {
@@ -25,45 +31,77 @@ function removeUnwantedNodes(root: HTMLElement): void {
   }
 }
 
-function extractTextRecursive(node: Node, lines: string[]): void {
+function extractTextRecursive(node: Node): string {
   if (node.nodeType === Node.TEXT_NODE) {
-    const text = node.textContent?.trim();
-    if (text) {
-      lines.push(text);
-    }
-    return;
+    return node.textContent ?? "";
   }
 
   if (node.nodeType !== Node.ELEMENT_NODE) {
-    return;
+    return "";
   }
 
   const element = node as HTMLElement;
   const tagName = element.tagName.toLowerCase();
 
   if (tagName === "br") {
-    lines.push("");
-    return;
+    return "\n";
   }
 
-  if (["p", "div", "li", "h1", "h2", "h3", "h4", "h5", "h6"].includes(tagName)) {
-    for (const child of Array.from(node.childNodes)) {
-      extractTextRecursive(child, lines);
-    }
-    lines.push("");
-    return;
+  if (tagName === "pre") {
+    return `\n${element.textContent?.trim() ?? ""}\n`;
   }
 
-  if (tagName === "pre" || tagName === "code") {
-    const text = element.textContent?.trim();
-    if (text) {
-      lines.push(text);
-      lines.push("");
-    }
-    return;
+  const content = Array.from(node.childNodes, extractTextRecursive).join("");
+
+  if (["th", "td"].includes(tagName)) {
+    return `${content.trim()}\t`;
   }
 
-  for (const child of Array.from(node.childNodes)) {
-    extractTextRecursive(child, lines);
+  if ([
+    "address",
+    "article",
+    "aside",
+    "blockquote",
+    "div",
+    "dl",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "header",
+    "hr",
+    "li",
+    "main",
+    "nav",
+    "ol",
+    "p",
+    "section",
+    "table",
+    "tbody",
+    "tfoot",
+    "thead",
+    "tr",
+    "ul",
+  ].includes(tagName)) {
+    return `${content.trim()}\n`;
   }
+
+  return content;
+}
+
+function normalizePlainText(text: string): string {
+  return text
+    .replace(/\u00a0/g, " ")
+    .split("\n")
+    .map((line) => line.replace(/[\t ]+/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }

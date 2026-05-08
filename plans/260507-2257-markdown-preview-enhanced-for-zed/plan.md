@@ -49,7 +49,7 @@ No unfinished existing plans found. Workspace was empty at creation time.
 | 2 | [Crossnote Preview Server Core](./phase-02-crossnote-preview-server-core.md) | Complete | 2w |
 | 3 | [Browser Preview and Rich Copy](./phase-03-browser-preview-and-rich-copy.md) | Complete | 1.5w |
 | 4 | [Zed Launch Integration](./phase-04-zed-extension-launch-integration.md) | Complete | 1w |
-| 5 | [MPE Tier One Rendering and Export](./phase-05-mpe-tier-one-rendering-and-export.md) | Pending | 1.5w |
+| 5 | [MPE Tier One Rendering and Export](./phase-05-mpe-tier-one-rendering-and-export.md) | Complete | 1.5w |
 | 6 | [Security Permissions and Trusted Execution](./phase-06-security-permissions-and-trusted-execution.md) | Pending | 1w |
 | 7 | [Testing Packaging and Release](./phase-07-testing-packaging-and-release.md) | Pending | 1w |
 | 8 | [Enhanced Parity Roadmap](./phase-08-enhanced-parity-roadmap.md) | Pending | ongoing |
@@ -61,7 +61,7 @@ No unfinished existing plans found. Workspace was empty at creation time.
 - Phase 2 is complete: the secure saved-file server initializes a Crossnote notebook per workspace, renders through `getNoteMarkdownEngine()`, and keeps markdown-it as the safe fallback path.
 - Phase 3 is complete: the browser preview client consumes server payloads, preserves scroll, and supports rich/plain copy.
 - Phase 4 is complete: the Zed task/keybinding path launches or reuses the per-workspace browser preview.
-- Phase 5 is next and only adds features allowed by Phase 0/1 security gates now that the Crossnote bridge is complete; Phase 6 completes hardening and trusted execution design.
+- Phase 5 is complete: Tier 1 fixture coverage, safe custom CSS, and session-token HTML export are implemented; Phase 6 completes hardening and trusted execution design.
 - Phase 7 is the final integration gate.
 - Phase 8 is post-MVP expansion.
 

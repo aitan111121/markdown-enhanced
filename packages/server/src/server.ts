@@ -1,12 +1,15 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
 import { DEFAULT_HOST, SERVICE_NAME, type RenderPayload } from "./contracts.js";
 import { FileWatchService } from "./file-watch-service.js";
+import { createHtmlExport, getHtmlExportFileName } from "./html-export-service.js";
 import { resolveWorkspaceFile } from "./path-safety.js";
 import { buildPreviewUrl } from "./preview-url.js";
 import { renderSavedFile } from "./saved-file-preview.js";
+import { getCustomStylePath, resolveExistingCustomStylePath } from "./safe-custom-style.js";
 import { createPreviewShell } from "./static-preview-shell.js";
 import { randomToken, WorkspaceSessionStore } from "./workspace-session-store.js";
 import {
@@ -50,8 +53,21 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
   let boundPort = options.port;
 
   fileWatch.on("file:change", async (event) => {
+    const changedSessions = new Set(sessions.getSessionsByFilePath(event.filePath));
+    const customStylePath = await getCustomStylePath(resolved.workspaceRoot).catch(() => undefined);
+    const resolvedCustomStylePath = await resolveExistingCustomStylePath(resolved.workspaceRoot);
+
+    if (
+      (customStylePath && pathsEqual(customStylePath, event.filePath)) ||
+      (resolvedCustomStylePath && pathsEqual(resolvedCustomStylePath, event.filePath))
+    ) {
+      for (const changedSession of sessions.getSessionsByWorkspaceRoot(resolved.workspaceRoot)) {
+        changedSessions.add(changedSession);
+      }
+    }
+
     await Promise.all(
-      sessions.getSessionsByFilePath(event.filePath).map(async (changedSession) => {
+      Array.from(changedSessions).map(async (changedSession) => {
         const clients = connectedClients.get(changedSession.id);
         if (!clients || clients.size === 0) {
           return;
@@ -146,12 +162,16 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
         fileWatch.watch({ filePath: previewSession.filePath });
       }
 
+      await watchCustomStyleForSession(previewSession);
+
       client.on("close", () => {
         clients.delete(client);
 
         if (clients.size === 0 && !hasOpenClientsForFile(previewSession.filePath)) {
           void fileWatch.unwatch(previewSession.filePath);
         }
+
+        void unwatchCustomStyleIfIdle(previewSession.workspaceRoot);
       });
 
       try {
@@ -202,6 +222,31 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
       const clients = connectedClients.get(candidate.id);
       return Boolean(clients && clients.size > 0);
     });
+  }
+
+  function hasOpenClientsForWorkspace(workspaceRoot: string): boolean {
+    return sessions.getSessionsByWorkspaceRoot(workspaceRoot).some((candidate) => {
+      const clients = connectedClients.get(candidate.id);
+      return Boolean(clients && clients.size > 0);
+    });
+  }
+
+  async function watchCustomStyleForSession(previewSession: typeof session): Promise<void> {
+    const customStylePath = await resolveExistingCustomStylePath(previewSession.workspaceRoot);
+    if (customStylePath && !fileWatch.isWatching(customStylePath)) {
+      fileWatch.watch({ filePath: customStylePath });
+    }
+  }
+
+  async function unwatchCustomStyleIfIdle(workspaceRoot: string): Promise<void> {
+    if (hasOpenClientsForWorkspace(workspaceRoot)) {
+      return;
+    }
+
+    const customStylePath = await resolveExistingCustomStylePath(workspaceRoot);
+    if (customStylePath) {
+      await fileWatch.unwatch(customStylePath);
+    }
   }
 }
 
@@ -278,7 +323,35 @@ async function handleRequest(
       return;
     }
 
-    sendHtml(response, 200, createPreviewShell(session));
+    sendPreviewHtml(response, 200, createPreviewShell(session), session.styleNonce);
+    return;
+  }
+
+  if (request.method === "POST" && requestUrl.pathname === "/api/export/html") {
+    let body: Record<string, unknown>;
+    try {
+      body = await readJsonBody(request);
+    } catch {
+      sendJson(response, 400, { error: "invalid_request" });
+      return;
+    }
+
+    if (typeof body.sessionId !== "string" || typeof body.token !== "string") {
+      sendJson(response, 400, { error: "invalid_request" });
+      return;
+    }
+
+    const session = context.sessions.getSession(body.sessionId);
+    if (!session || session.socketToken !== body.token) {
+      sendJson(response, 401, { error: "invalid_session" });
+      return;
+    }
+
+    const payload = await renderSavedFile({
+      workspaceRoot: session.workspaceRoot,
+      filePath: session.filePath
+    });
+    sendHtmlDownload(response, getHtmlExportFileName(payload.sourcePath), createHtmlExport(payload));
     return;
   }
 
@@ -441,12 +514,22 @@ async function sendAsset(response: ServerResponse, relativePath: string, content
   response.end(contents);
 }
 
-function sendHtml(response: ServerResponse, statusCode: number, html: string): void {
+function sendPreviewHtml(response: ServerResponse, statusCode: number, html: string, styleNonce: string): void {
   response.writeHead(statusCode, {
     "content-type": "text/html; charset=utf-8",
     "cache-control": "no-store",
     "pragma": "no-cache",
-    "content-security-policy": "default-src 'self'; connect-src 'self' ws://127.0.0.1:*; script-src 'self'; style-src 'self'"
+    "content-security-policy": `default-src 'self'; connect-src 'self' ws://127.0.0.1:*; script-src 'self'; style-src 'self' 'nonce-${styleNonce}'`
+  });
+  response.end(html);
+}
+
+function sendHtmlDownload(response: ServerResponse, fileName: string, html: string): void {
+  response.writeHead(200, {
+    "content-type": "text/html; charset=utf-8",
+    "content-disposition": `attachment; filename="${fileName}"`,
+    "cache-control": "no-store",
+    "pragma": "no-cache"
   });
   response.end(html);
 }
@@ -458,4 +541,12 @@ function sendJson(response: ServerResponse, statusCode: number, body: unknown): 
     "pragma": "no-cache"
   });
   response.end(JSON.stringify(body));
+}
+
+function pathsEqual(left: string, right: string): boolean {
+  const normalizedLeft = path.resolve(left);
+  const normalizedRight = path.resolve(right);
+  return process.platform === "win32"
+    ? normalizedLeft.toLowerCase() === normalizedRight.toLowerCase()
+    : normalizedLeft === normalizedRight;
 }

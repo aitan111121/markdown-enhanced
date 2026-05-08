@@ -9,7 +9,7 @@ export function createPreviewShell(session: PreviewSession): string {
     <title>Markdown Preview Enhanced</title>
     <link rel="stylesheet" href="/assets/preview.css">
   </head>
-  <body data-session-id="${escapeAttribute(session.id)}" data-token="${escapeAttribute(session.socketToken)}">
+  <body data-session-id="${escapeAttribute(session.id)}" data-token="${escapeAttribute(session.socketToken)}" data-style-nonce="${escapeAttribute(session.styleNonce)}">
     <header class="preview-toolbar">
       <strong>Markdown Preview Enhanced</strong>
       <span id="preview-status">Connecting</span>

@@ -3,6 +3,7 @@ import { MAX_SOURCE_BYTES } from "./contracts.js";
 import type { RenderPayload } from "./contracts.js";
 import { renderMarkdown } from "./crossnote-renderer.js";
 import { resolveWorkspaceFile } from "./path-safety.js";
+import { loadSafeCustomStyle } from "./safe-custom-style.js";
 
 export async function renderSavedFile(input: {
   workspaceRoot: string;
@@ -17,11 +18,20 @@ export async function renderSavedFile(input: {
   });
   const markdown = await readUtf8FileWithinLimit(resolved.filePath, maxBytes);
 
-  return renderMarkdown({
+  const payload = await renderMarkdown({
     markdown,
     sourcePath: resolved.filePath,
     workspaceRoot: resolved.workspaceRoot
   });
+  const customStyle = await loadSafeCustomStyle(resolved.workspaceRoot);
+
+  return {
+    ...payload,
+    diagnostics: [...payload.diagnostics, ...customStyle.diagnostics],
+    customStyle: customStyle.css && customStyle.sourcePath
+      ? { css: customStyle.css, sourcePath: customStyle.sourcePath }
+      : undefined
+  };
 }
 
 async function readUtf8FileWithinLimit(filePath: string, maxBytes: number): Promise<string> {

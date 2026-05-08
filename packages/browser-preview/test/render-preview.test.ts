@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { applyCustomStyle } from "../src/custom-style.js";
+import { exportHtml } from "../src/html-export.js";
 import { initializeToolbar } from "../src/preview-toolbar.js";
 import { renderPreview } from "../src/render-preview.js";
 
@@ -51,5 +53,69 @@ describe("initializeToolbar", () => {
 
     const buttons = Array.from(toolbar.querySelectorAll("button"), (button) => button.textContent);
     expect(buttons).toEqual(["Copy Selection", "Copy Document"]);
+  });
+
+  it("adds an export button when export is configured", () => {
+    const toolbar = document.createElement("nav");
+    const previewRoot = document.createElement("main");
+
+    initializeToolbar(toolbar, previewRoot, { exportHtml: async () => ({ success: true }) });
+
+    const buttons = Array.from(toolbar.querySelectorAll("button"), (button) => button.textContent);
+    expect(buttons).toEqual(["Copy Selection", "Copy Document", "Export HTML"]);
+  });
+});
+
+describe("applyCustomStyle", () => {
+  it("applies CSS with the preview style nonce", () => {
+    document.body.dataset.styleNonce = "nonce-value";
+
+    applyCustomStyle(".markdown-preview h1 { color: red; }");
+
+    const style = document.querySelector<HTMLStyleElement>("#zed-mpe-custom-style");
+    expect(style?.getAttribute("nonce")).toBe("nonce-value");
+    expect(style?.textContent).toContain("color: red");
+  });
+
+  it("removes custom CSS when the payload has no style", () => {
+    applyCustomStyle(".markdown-preview h1 { color: red; }");
+    applyCustomStyle(undefined);
+
+    expect(document.querySelector("#zed-mpe-custom-style")).toBeNull();
+  });
+});
+
+describe("exportHtml", () => {
+  it("downloads HTML returned by the server", async () => {
+    const click = vi.fn();
+    vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
+      const element = document.createElementNS("http://www.w3.org/1999/xhtml", tagName) as HTMLElement;
+      if (tagName === "a") {
+        Object.defineProperty(element, "click", { value: click });
+      }
+      return element as any;
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("<html></html>", {
+      status: 200,
+      headers: { "content-disposition": 'attachment; filename="note.html"' }
+    })));
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => "blob:test"),
+      revokeObjectURL: vi.fn()
+    });
+
+    const result = await exportHtml({ sessionId: "session", token: "token" });
+
+    expect(result.success).toBe(true);
+    expect(fetch).toHaveBeenCalledWith("/api/export/html", expect.objectContaining({ method: "POST" }));
+    expect(click).toHaveBeenCalled();
+  });
+
+  it("reports export failures", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("denied", { status: 401 })));
+
+    const result = await exportHtml({ sessionId: "session", token: "bad" });
+
+    expect(result).toEqual({ success: false, error: "HTTP 401" });
   });
 });

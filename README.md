@@ -9,7 +9,7 @@ This repository is building a secure Zed workflow for opening the current saved 
 - Localhost-only preview server bound to `127.0.0.1`.
 - Tokenized preview URL and WebSocket session bootstrap.
 - Per-workspace server reuse for repeated current-file launches.
-- Safe markdown-it renderer with escape validation and secure defaults; Crossnote Notebook.init integration pending.
+- Crossnote-backed renderer with safe defaults, markdown-it fallback, custom CSS subset support, and session-token HTML export.
 
 ## Development
 

@@ -1,5 +1,5 @@
 import { request } from "node:http";
-import { mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -220,6 +220,101 @@ describe("startPreviewServer", () => {
       })
     });
   });
+
+  it("sends update when existing custom style changes or is deleted", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const stylePath = await writeCustomStyle(workspace, ".markdown-preview h1 { color: red; }");
+    const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
+    servers.push(server);
+
+    const previewHtml = await fetch(server.url).then((r) => r.text());
+    const sessionId = previewHtml.match(/data-session-id="([^"]+)"/)?.[1];
+    const token = previewHtml.match(/data-token="([^"]+)"/)?.[1];
+
+    const ws = new WebSocket(`ws://127.0.0.1:${server.port}/ws/${sessionId}?token=${token}`);
+    const messages: any[] = [];
+
+    await new Promise<void>((resolve, reject) => {
+      ws.on("message", (data) => {
+        messages.push(JSON.parse(data.toString()));
+
+        if (messages.length === 2) {
+          writeFile(stylePath, ".markdown-preview h1 { color: blue; }").catch(reject);
+        }
+
+        if (messages.length === 3) {
+          rm(stylePath, { force: true }).catch(reject);
+        }
+
+        if (messages.length >= 4) {
+          ws.close();
+          resolve();
+        }
+      });
+
+      ws.on("error", reject);
+      ws.on("close", () => {
+        if (messages.length < 4) {
+          reject(new Error("WebSocket closed before style update"));
+        }
+      });
+
+      setTimeout(() => reject(new Error("Timeout waiting for style update")), 4000);
+    });
+
+    expect(messages[2]).toMatchObject({
+      type: "preview:update",
+      payload: expect.objectContaining({
+        customStyle: expect.objectContaining({ css: expect.stringContaining("color: blue") })
+      })
+    });
+    expect(messages[3]).toMatchObject({
+      type: "preview:update",
+      payload: expect.not.objectContaining({ customStyle: expect.anything() })
+    });
+  });
+
+  it("exports standalone HTML for an authenticated preview session", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    await writeCustomStyle(workspace, ".markdown-preview h1 { color: red; }");
+    const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
+    servers.push(server);
+
+    const previewHtml = await fetch(server.url).then((r) => r.text());
+    const sessionId = previewHtml.match(/data-session-id="([^"]+)"/)?.[1];
+    const token = previewHtml.match(/data-token="([^"]+)"/)?.[1];
+    const response = await fetch(`http://127.0.0.1:${server.port}/api/export/html`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId, token })
+    });
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-disposition")).toContain('filename="note.html"');
+    expect(html).toContain("<!doctype html>");
+    expect(html).toContain("Hello");
+    expect(html).toContain(".markdown-preview h1 { color: red; }");
+    expect(html).not.toContain(String(token));
+    expect(html).not.toContain("data-token");
+    expect(html).not.toContain("<script");
+  });
+
+  it("rejects HTML export without the browser session token", async () => {
+    const { workspace, filePath } = await makeWorkspace();
+    const server = await startPreviewServer({ workspacePath: workspace, filePath, port: 0 });
+    servers.push(server);
+
+    const previewHtml = await fetch(server.url).then((r) => r.text());
+    const sessionId = previewHtml.match(/data-session-id="([^"]+)"/)?.[1];
+    const response = await fetch(`http://127.0.0.1:${server.port}/api/export/html`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sessionId, token: "wrong" })
+    });
+
+    expect(response.status).toBe(401);
+  });
 });
 
 async function makeWorkspace(): Promise<{ workspace: string; filePath: string }> {
@@ -251,4 +346,12 @@ function requestWithHost(url: string, host: string): Promise<{ statusCode: numbe
     clientRequest.on("error", reject);
     clientRequest.end();
   });
+}
+
+async function writeCustomStyle(workspace: string, contents: string): Promise<string> {
+  const crossnoteDir = path.join(workspace, ".crossnote");
+  await mkdir(crossnoteDir);
+  const stylePath = path.join(crossnoteDir, "style.less");
+  await writeFile(stylePath, contents);
+  return stylePath;
 }

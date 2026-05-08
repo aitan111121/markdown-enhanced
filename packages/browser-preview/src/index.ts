@@ -1,3 +1,5 @@
+import { applyCustomStyle } from "./custom-style.js";
+import { exportHtml } from "./html-export.js";
 import { renderPreview, renderError, clearErrors } from "./render-preview.js";
 import { initializeToolbar } from "./preview-toolbar.js";
 
@@ -5,7 +7,12 @@ type ServerMessage =
   | { type: "preview:status"; message: string }
   | {
       type: "preview:update";
-      payload: { html: string; sourcePath: string; diagnostics: string[] };
+      payload: {
+        html: string;
+        sourcePath: string;
+        diagnostics: string[];
+        customStyle?: { css: string; sourcePath: string };
+      };
     }
   | { type: "preview:error"; message: string };
 
@@ -19,7 +26,7 @@ if (!root || !statusNode || !toolbar || !sessionId || !token) {
   throw new Error("Preview shell is missing required state");
 }
 
-initializeToolbar(toolbar, root);
+initializeToolbar(toolbar, root, { exportHtml: () => exportHtml({ sessionId, token }) });
 connect({ sessionId, token }, root, statusNode);
 
 function connect(
@@ -54,6 +61,7 @@ function connect(
 
     if (message.type === "preview:update") {
       clearErrors(previewRoot);
+      applyCustomStyle(message.payload.customStyle?.css);
       renderPreview(previewRoot, message.payload.html, {
         preserveScroll: true,
       });

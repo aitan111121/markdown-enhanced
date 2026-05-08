@@ -13,6 +13,7 @@ export class WorkspaceSessionStore {
       id: randomUUID(),
       previewToken: randomToken(),
       socketToken: randomToken(),
+      styleNonce: randomToken(),
       previewTokenUsed: false,
       workspaceRoot: input.workspaceRoot,
       filePath: input.filePath,
@@ -29,6 +30,10 @@ export class WorkspaceSessionStore {
 
   getSessionsByFilePath(filePath: string): PreviewSession[] {
     return Array.from(this.#sessions.values()).filter((session) => session.filePath === filePath);
+  }
+
+  getSessionsByWorkspaceRoot(workspaceRoot: string): PreviewSession[] {
+    return Array.from(this.#sessions.values()).filter((session) => session.workspaceRoot === workspaceRoot);
   }
 
   consumePreviewToken(sessionId: string, token: string | null): PreviewSession | undefined {

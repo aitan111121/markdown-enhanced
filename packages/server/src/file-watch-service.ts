@@ -8,7 +8,7 @@ export type FileWatchOptions = {
 
 export type FileChangeEvent = {
   filePath: string;
-  event: "change";
+  event: "add" | "change" | "unlink";
 };
 
 export type FileWatchReadyEvent = {
@@ -40,16 +40,20 @@ export class FileWatchService extends EventEmitter {
       debounceTimer: null
     };
 
-    watcher.on("change", () => {
+    const emitChange = (event: FileChangeEvent["event"]) => {
       if (state.debounceTimer) {
         clearTimeout(state.debounceTimer);
       }
 
       state.debounceTimer = setTimeout(() => {
         state.debounceTimer = null;
-        this.emit("file:change", { filePath: options.filePath, event: "change" } as FileChangeEvent);
+        this.emit("file:change", { filePath: options.filePath, event } as FileChangeEvent);
       }, debounceMs);
-    });
+    };
+
+    watcher.on("add", () => emitChange("add"));
+    watcher.on("change", () => emitChange("change"));
+    watcher.on("unlink", () => emitChange("unlink"));
 
     watcher.on("ready", () => {
       this.emit("watch:ready", { filePath: options.filePath } as FileWatchReadyEvent);

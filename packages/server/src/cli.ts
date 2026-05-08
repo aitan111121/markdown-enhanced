@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import { stat } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { openPreviewUrl } from "./browser-launch.js";
+import { CliDiagnosticError, formatCliDiagnostic, redactSensitiveUrlParts, toCliDiagnostic } from "./cli-diagnostics.js";
 import { createPreviewInExistingWorkspaceServer } from "./preview-server-client.js";
 import { startPreviewServer, type StartedPreviewServer } from "./server.js";
 
@@ -73,17 +75,21 @@ export function parseCliArgs(args: string[]): CliOptions {
 
 export async function main(args = process.argv.slice(2)): Promise<void> {
   const options = parseCliArgs(args);
+  await assertPreviewAssetsAvailable();
   let reused: Awaited<ReturnType<typeof createPreviewInExistingWorkspaceServer>> = undefined;
 
   if (options.port === 0) {
     reused = await createPreviewInExistingWorkspaceServer({
       workspacePath: options.workspace,
-      filePath: options.file
+      filePath: options.file,
+      onDiagnostic: (diagnostic) => {
+        console.warn(`[zed-mpe] ${diagnostic.code}: ${diagnostic.message}`);
+      }
     });
   }
 
   if (reused) {
-    console.log(`[zed-mpe] reused ${reused.url}`);
+    console.log(options.open ? `[zed-mpe] reused ${redactPreviewUrl(reused.url)}` : `[zed-mpe] reused ${reused.url}`);
     console.log(`[zed-mpe] health http://127.0.0.1:${reused.port}/health`);
     await openIfRequested(options.open, reused.url);
     return;
@@ -95,7 +101,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     port: options.port
   });
 
-  console.log(`[zed-mpe] preview ${started.url}`);
+  console.log(options.open ? `[zed-mpe] preview ${redactPreviewUrl(started.url)}` : `[zed-mpe] preview ${started.url}`);
   console.log(`[zed-mpe] health http://127.0.0.1:${started.port}/health`);
 
   installShutdownHandlers(started);
@@ -139,9 +145,36 @@ async function openIfRequested(open: boolean, url: string): Promise<void> {
   }
 
   await openPreviewUrl(url).catch((error: unknown) => {
-    console.warn(`[zed-mpe] browser open failed: ${String(error)}`);
-    console.warn(`[zed-mpe] open manually: ${url}`);
+    const message = redactSensitiveUrlParts(error instanceof Error ? error.message : String(error));
+    console.warn(`[zed-mpe] W_BROWSER_OPEN_FAILED: ${message}`);
+    console.warn("[zed-mpe] rerun with --no-open to print a one-time preview URL for manual opening");
   });
+}
+
+async function assertPreviewAssetsAvailable(): Promise<void> {
+  const requiredAssets = [
+    new URL("../../browser-preview/dist/index.js", import.meta.url),
+    new URL("../../browser-preview/src/preview.css", import.meta.url)
+  ];
+
+  for (const asset of requiredAssets) {
+    try {
+      const assetStat = await stat(asset);
+      if (!assetStat.isFile()) {
+        throw new Error("not a file");
+      }
+    } catch {
+      throw new CliDiagnosticError(
+        "E_BUILD_ASSETS_MISSING",
+        "Browser preview assets are missing",
+        "Run npm run build before launching the preview."
+      );
+    }
+  }
+}
+
+function redactPreviewUrl(url: string): string {
+  return url.replace(/([?&]token=)[^&]+/i, "$1<redacted>");
 }
 
 function requiredString(values: Map<string, string | boolean>, key: string): string {
@@ -160,7 +193,7 @@ function usage(): string {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error: unknown) => {
-    console.error(`[zed-mpe] ${error instanceof Error ? error.message : String(error)}`);
+    console.error(formatCliDiagnostic(toCliDiagnostic(error)));
     process.exitCode = 1;
   });
 }

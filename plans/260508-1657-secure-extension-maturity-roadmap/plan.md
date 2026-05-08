@@ -1,11 +1,11 @@
 ---
 title: "Secure Extension Maturity Roadmap"
 description: "Improve real Zed install/use, Markdown review features, and docs-team value while preserving the local-only secure preview model."
-status: pending
+status: complete
 priority: P1
 effort: 5w
 issue:
-branch: docs/secure-extension-maturity-roadmap-plan
+branch: feat/secure-extension-maturity-roadmap
 tags: [feature, docs, security, zed-extension, roadmap]
 blockedBy: []
 blocks: []
@@ -35,12 +35,12 @@ Mature Markdown Preview Enhanced for Zed as a secure technical-docs preview tool
 
 | Phase | Name | Status | Effort |
 |---|---|---:|---:|
-| 1 | [Zed Install And Daily-Use Maturity](./phase-01-zed-install-and-daily-use-maturity.md) | Pending | 1w |
-| 2 | [Docs-Team Workflow Guide](./phase-02-docs-team-workflow-guide.md) | Pending | 0.5w |
-| 3 | [Browser Review Usability](./phase-03-browser-review-usability.md) | Pending | 1w |
-| 4 | [Conservative Workspace Link Diagnostics](./phase-04-conservative-workspace-link-diagnostics.md) | Pending | 1w |
-| 5 | [Hybrid Architecture Preparation](./phase-05-hybrid-architecture-preparation.md) | Pending | 0.5w |
-| 6 | [Safe Browser Draft Editing](./phase-06-safe-browser-draft-editing.md) | Pending | 1w |
+| 1 | [Zed Install And Daily-Use Maturity](./phase-01-zed-install-and-daily-use-maturity.md) | Complete | 1w |
+| 2 | [Docs-Team Workflow Guide](./phase-02-docs-team-workflow-guide.md) | Complete | 0.5w |
+| 3 | [Browser Review Usability](./phase-03-browser-review-usability.md) | Complete | 1w |
+| 4 | [Conservative Workspace Link Diagnostics](./phase-04-conservative-workspace-link-diagnostics.md) | Complete | 1w |
+| 5 | [Hybrid Architecture Preparation](./phase-05-hybrid-architecture-preparation.md) | Complete | 0.5w |
+| 6 | [Safe Browser Draft Editing](./phase-06-safe-browser-draft-editing.md) | Complete | 1w |
 
 ## Execution Strategy
 
@@ -77,3 +77,5 @@ Implementation command after review:
 ```bash
 /ck:cook F:\Windows\Study\Selfhost\zed-extension\plans\260508-1657-secure-extension-maturity-roadmap\plan.md
 ```
+
+Implemented on `feat/secure-extension-maturity-roadmap` with validation through lint, typecheck, build, tests, package smoke, package dry run, and audit baseline review.

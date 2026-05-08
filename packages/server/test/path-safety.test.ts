@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveWorkspaceFile } from "../src/path-safety.js";
+import { resolveContainedPathCandidate, resolveWorkspaceFile } from "../src/path-safety.js";
 
 const tempRoots: string[] = [];
 
@@ -56,18 +56,15 @@ describe("resolveWorkspaceFile", () => {
       .resolves.toMatchObject({ filePath: realFilePath });
   });
 
-  it("rejects encoded traversal characters before filesystem resolution", async () => {
+  it("treats percent sequences in filesystem paths as literal file names", async () => {
     const workspace = await makeTempRoot();
+    const filePath = path.join(workspace, "100% real.md");
+    await writeFile(filePath, "# Percent");
+    const realFilePath = await realpath(filePath);
 
-    await expect(resolveWorkspaceFile({ workspacePath: workspace, filePath: "%2e%2e%2fsecret.md" }))
-      .rejects.toThrow("encoded traversal");
-  });
-
-  it("rejects malformed percent encoding", async () => {
-    const workspace = await makeTempRoot();
-
-    await expect(resolveWorkspaceFile({ workspacePath: workspace, filePath: "%zz" }))
-      .rejects.toThrow("malformed percent encoding");
+    await expect(resolveWorkspaceFile({ workspacePath: workspace, filePath })).resolves.toMatchObject({
+      filePath: realFilePath
+    });
   });
 
   it("rejects UNC-style paths", async () => {
@@ -92,6 +89,41 @@ describe("resolveWorkspaceFile", () => {
 
     await expect(resolveWorkspaceFile({ workspacePath: workspace, filePath: linkPath }))
       .rejects.toThrow("Path escapes workspace root");
+  });
+});
+
+describe("resolveContainedPathCandidate", () => {
+  it("classifies missing files without throwing", async () => {
+    const workspace = await makeTempRoot();
+
+    await expect(resolveContainedPathCandidate({
+      workspacePath: workspace,
+      baseDirectoryPath: workspace,
+      candidatePath: "missing.md"
+    })).resolves.toMatchObject({ ok: true, exists: false });
+  });
+
+  it("rejects relative paths that escape the workspace", async () => {
+    const workspace = await makeTempRoot();
+
+    await expect(resolveContainedPathCandidate({
+      workspacePath: workspace,
+      baseDirectoryPath: workspace,
+      candidatePath: "../outside.md"
+    })).resolves.toMatchObject({ ok: false, reason: "outside-workspace" });
+  });
+
+  it("classifies existing files and size caps", async () => {
+    const workspace = await makeTempRoot();
+    const filePath = path.join(workspace, "large.md");
+    await writeFile(filePath, "0123456789");
+
+    await expect(resolveContainedPathCandidate({
+      workspacePath: workspace,
+      baseDirectoryPath: workspace,
+      candidatePath: "large.md",
+      maxBytes: 4
+    })).resolves.toMatchObject({ ok: true, exists: true, isFile: true, tooLarge: true });
   });
 });
 

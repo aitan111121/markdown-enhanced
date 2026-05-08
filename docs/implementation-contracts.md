@@ -31,6 +31,8 @@ Required invariants:
 - `GET /assets/render-preview.js`: serves the render replacement logic (scroll-preserving DOM updates).
 - `GET /assets/preview.css`: serves preview styles.
 - `POST /api/export/html`: browser-session-token endpoint that exports the current session's saved file as standalone sanitized HTML.
+- `POST /api/source/render-draft`: browser-session-token endpoint that renders unsaved draft Markdown for the current preview file.
+- `POST /api/source/apply-draft`: browser-session-token endpoint that writes only the current preview file after containment, size, serialized stale-source, backup, and atomic replacement checks.
 
 PDF export, direct Crossnote export APIs, and arbitrary local config/head/parser injection are deferred.
 
@@ -38,7 +40,7 @@ PDF export, direct Crossnote export APIs, and arbitrary local config/head/parser
 
 - `GET /ws/:sessionId?token=...`: opens a token-gated browser channel with Host/Origin validation; uses the browser token embedded in the preview shell.
 - `preview:status`: lifecycle status (e.g., connected, file changed).
-- `preview:update`: rendered HTML payload.
+- `preview:update`: rendered HTML payload with diagnostics, optional custom CSS, TOC metadata, source version, source text, and passive link diagnostics.
 - `preview:error`: render error while preserving previous preview state.
 
 Rich copy operations (selection and full document as text/html + text/plain) are handled client-side with clipboard sanitization.
@@ -57,3 +59,8 @@ Rich copy operations (selection and full document as text/html + text/plain) are
 - Load only a CSS-scoped `.crossnote/style.less` subset: contained path, 64 KiB cap, preview-root selectors only, no CSS escapes, no function-like tokens, no `@import`, no `url(...)`, no executable CSS patterns, and CSP nonce application in the browser.
 - Generate HTML exports from the existing sanitized `RenderPayload`; do not call Crossnote `htmlExport()` or accept export paths from the browser.
 - Reject UNC-style paths, malformed percent encoding, encoded traversal, and symlink escapes outside the workspace.
+- Keep draft editing read-only until explicit apply; never accept browser-supplied destination paths or background autosave.
+
+## Future Native Adapter
+
+Any future Zed-native preview surface must be an adapter over the same render/session/security contracts. It cannot bypass path containment, token/session authorization or equivalent editor-owned authentication, sanitizer rules, draft stale checks, backup writes, or disabled execution defaults.

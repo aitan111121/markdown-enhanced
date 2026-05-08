@@ -28,8 +28,11 @@ npm run smoke:package
 
 The smoke script packs the root package, installs it into a temporary project with production dependencies, launches `zed-mpe preview --no-open`, and verifies the local `/health` endpoint.
 
+The package includes README and linked docs needed for source-checkout and packaged CLI users: usage, security, threat model, feature parity, release checklist, integration guide, roadmap, webview evolution, architecture, contracts, and distribution notes.
+
 ## Later Packaging
 
 - Publish the server package with a `zed-mpe` binary.
 - Keep package smoke tests from a clean install in the release gate.
-- Revisit `zed_extension_api::npm_install_package` only after Phase 4 proves the extension UX and capability prompts are acceptable.
+- Revisit `zed_extension_api::npm_install_package` only after a concrete extension command/install path is proven.
+- If Zed adds a verified webview or panel API, keep the npm CLI/server core as the fallback path and add a native adapter over the same contracts.

@@ -17,6 +17,7 @@ This project is inspired by [Markdown Preview Enhanced](https://github.com/shd10
 - [Configuration](#configuration)
 - [Feature Parity](#feature-parity)
 - [Security Model](#security-model)
+- [Docs Teams](#docs-teams)
 - [Development](#development)
 - [Contributing](#contributing)
 - [License](#license)
@@ -44,6 +45,9 @@ The first release focuses on the useful, low-trust parts of that workflow:
 - **Custom preview CSS**: load a restricted `.crossnote/style.less` CSS subset for workspace styling.
 - **Per-workspace server reuse**: repeated launches reuse the existing local preview server when possible.
 - **Passive code-chunk diagnostics**: runnable MPE code chunks are detected and shown as blocked, not executed.
+- **Contents sidebar**: navigate generated headings from a left or right browser sidebar.
+- **Passive link diagnostics**: classify local Markdown/image links without fetching remote URLs.
+- **Safe draft editing**: edit a browser draft, preview it, then explicitly apply with stale-source checks and backup creation.
 
 ## Install
 
@@ -122,7 +126,7 @@ Then use the extension like this:
 2. Press your task keybinding, or run `task: spawn` and choose `MPE Preview Current File`.
 3. A browser preview opens with a one-time local session token.
 4. Save the Markdown file to refresh the preview.
-5. Use the browser toolbar to copy rich content or export HTML.
+5. Use the browser toolbar to copy rich content, export HTML, open a generated contents sidebar, or draft small edits.
 
 The first preview launch starts a small server task for the workspace. Later launches reuse that server and exit quickly after opening a new browser URL. Stop the Zed task terminal to stop the preview server.
 
@@ -132,7 +136,7 @@ You can also launch a preview directly from a terminal:
 npm run zed-mpe -- preview --workspace . --file README.md --port 0 --open --save-mode filesystem
 ```
 
-Use `--no-open` to print the preview URL without launching your browser.
+Use `--no-open` to print the one-time preview URL without launching your browser. Normal `--open` launches the browser and redacts tokenized URLs in status output.
 
 ## Configuration
 
@@ -160,8 +164,11 @@ The goal is practical MPE compatibility for Zed without copying unsafe assumptio
 | KaTeX math | Supported |
 | Front matter and generated metadata | Supported |
 | Mermaid | Partial, depends on safe Crossnote output |
+| TOC/sidebar navigation | Supported |
+| Passive workspace link diagnostics | Supported |
 | Rich copy | Supported |
 | Standalone HTML export | Supported |
+| Browser draft editing | Supported with explicit apply |
 | `.crossnote/style.less` | Partial CSS-only subset |
 | PDF/Pandoc export | Deferred |
 | Code chunk execution | Disabled and blocked |
@@ -184,6 +191,12 @@ Important defaults:
 - Clipboard and exported HTML strip scripts, event handlers, local file URLs, executable URL schemes, and session tokens.
 
 See [docs/security.md](docs/security.md) and [docs/threat-model.md](docs/threat-model.md) for implementation details.
+
+## Docs Teams
+
+Technical docs team guidance lives in [docs/integration-guide.md](docs/integration-guide.md). The public roadmap is in [docs/roadmap.md](docs/roadmap.md), and the future Zed-native preview path is tracked in [docs/webview-evolution.md](docs/webview-evolution.md).
+
+The short version: keep this tool local, save-based, and explicit. Use the browser review surface for rendered review, rich copy, HTML snapshots, link diagnostics, and small draft edits. Keep the static site generator or publishing pipeline as the source of truth for deployed docs.
 
 ## Development
 

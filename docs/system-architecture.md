@@ -2,7 +2,7 @@
 
 ## Overview
 
-Markdown Preview Enhanced for Zed uses an external browser preview because Zed extensions do not expose VS Code-style webviews. The first release path is:
+Markdown Preview Enhanced for Zed uses an external browser preview because Zed extensions do not expose a verified VS Code-style webview/panel API for this use case. The current release path is:
 
 ```text
 Zed keybinding/task -> Node CLI -> reused or new localhost server -> browser preview
@@ -38,6 +38,8 @@ zed-mpe preview --workspace <path> --file <path> --port <number|0> --open --save
 - `GET /assets/render-preview.js`: browser render replacement logic (scroll-preserving DOM updates).
 - `GET /assets/preview.css`: preview stylesheet.
 - `POST /api/export/html`: session-token HTML export for the current saved preview.
+- `POST /api/source/render-draft`: session-token draft render for explicit browser editing.
+- `POST /api/source/apply-draft`: session-token draft apply for the current preview file with stale checks and backup creation.
 
 PDF export and direct Crossnote export APIs are deferred.
 
@@ -52,6 +54,7 @@ PDF export and direct Crossnote export APIs are deferred.
 - Rendered preview HTML is post-filtered to remove active containers and executable attributes before wrapping in the browser payload.
 - Runnable code chunk fences are detected before render and reported as diagnostics while execution remains disabled.
 - The server optionally attaches sanitized `.crossnote/style.less` CSS to render payloads. The browser applies it with a CSP nonce and removes it when absent.
+- The server attaches source version metadata and passive link diagnostics to preview payloads. Link diagnostics use contained path resolution and do not fetch remote URLs.
 - HTML exports reuse the sanitized render payload and inline base preview CSS plus any sanitized custom CSS.
 
 ## WebSocket Contract
@@ -70,6 +73,13 @@ PDF export and direct Crossnote export APIs are deferred.
 - HTML export from the current authenticated preview session.
 - Clipboard sanitization stripping scripts and event handlers.
 - Error display without destroying current preview state.
+- Generated contents sidebar with left/right browser-local placement.
+- Heading fragment copy without tokenized URLs.
+- Explicit draft editing with preview, apply, discard, stale checks, and backup reporting.
+
+## Preview Surface Boundary
+
+The localhost render/session/security core is the product core. The external browser is the current preview adapter. If Zed later exposes a verified native webview or panel API, a native adapter should reuse the same contracts and keep the browser adapter as fallback. See [webview-evolution.md](webview-evolution.md).
 
 ## Security Defaults
 
@@ -83,6 +93,7 @@ PDF export and direct Crossnote export APIs are deferred.
 - Allow only the Phase 5 CSS-only `.crossnote/style.less` subset; keep `.crossnote/config.js`, `head.html`, and parser JS ignored.
 - Ignore workspace `.crossnote/config.js` until Phase 5/6 implements explicit whitelists.
 - Keep Crossnote imports disabled until resource reads and remote fetches are routed through explicit policy checks.
+- Keep browser draft apply explicit, session-token gated, path-contained, size-limited, stale-checked, and backed up.
 
 ## Release Packaging
 

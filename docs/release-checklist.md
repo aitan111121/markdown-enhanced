@@ -23,10 +23,18 @@ Expected audit status for `0.1.0`: known moderate no-fix Crossnote transitive fi
 3. In Zed, run `zed: install dev extension` and select this repository.
 4. Confirm the Extensions page shows the dev extension override.
 5. Open a saved Markdown file and run `MPE Preview Current File`.
-6. Confirm the browser preview opens, save-based updates render, rich copy works, and `Export HTML` downloads a standalone file.
+6. Confirm the browser preview opens, save-based updates render, rich copy works, the contents sidebar navigates headings, passive link diagnostics appear for missing local links, draft editing can preview/apply a small change, and `Export HTML` downloads a standalone file.
 7. Stop the task terminal and confirm the preview server exits cleanly.
 
-Windows has been validated by the automated gates in this repository. macOS and Linux shell launch should be manually checked before registry submission.
+Manual platform matrix before public release:
+
+| Platform | Required Check |
+|---|---|
+| Windows | Source checkout task, separate workspace task, browser launch, draft apply backup. |
+| macOS | Source checkout task, browser launch through `open`, rich copy, export. |
+| Linux | Source checkout task, browser launch through `xdg-open`, blocked-port retry, export. |
+
+Zed task failures before the CLI starts should be documented separately from CLI diagnostic codes.
 
 ## Zed Registry Submission
 
@@ -49,3 +57,5 @@ Before the public release, paste selection and full-document rich copy into at l
 | Microsoft Word | Basic formatting and table structure survive paste. |
 | Notion | Headings, lists, and code are usable. |
 | Gmail | No scripts, local file URLs, or hidden tokens are pasted. |
+
+Also inspect copied full-document HTML and exported HTML to confirm preview toolbar, contents sidebar, draft editor controls, diagnostics panels, and heading copy buttons are excluded.

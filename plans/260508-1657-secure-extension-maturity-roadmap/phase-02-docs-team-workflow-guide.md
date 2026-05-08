@@ -11,7 +11,7 @@
 ## Overview
 
 - Priority: P1
-- Status: Pending
+- Status: Complete
 - Goal: document safe workflows for technical docs teams instead of broad MPE parity promises.
 
 ## Key Insights
@@ -58,12 +58,12 @@ Docs workspace -> Zed task/CLI -> local preview -> copy/export -> docs review/pu
 
 ## Todo List
 
-- [ ] Create docs-team integration guide.
-- [ ] Create public roadmap doc.
-- [ ] Add security review process section.
-- [ ] Update README and feature-parity links.
-- [ ] Include linked docs in package contents or mark GitHub-only.
-- [ ] Validate all local markdown links.
+- [x] Create docs-team integration guide.
+- [x] Create public roadmap doc.
+- [x] Add security review process section.
+- [x] Update README and feature-parity links.
+- [x] Include linked docs in package contents or mark GitHub-only.
+- [x] Validate all local markdown links.
 
 ## Success Criteria
 

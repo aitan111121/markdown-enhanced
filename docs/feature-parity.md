@@ -11,11 +11,13 @@ This matrix tracks Markdown Preview Enhanced compatibility for the Zed external-
 | KaTeX math | Render inline/block math. | Supported. | Crossnote dependency. | Script execution remains off. | `0.1.0` |
 | Mermaid | Render Mermaid preview blocks. | Partial. | Browser-side diagram behavior depends on Crossnote output. | Remote diagram services disabled. | `0.1.x` |
 | Front matter | Parse/display metadata. | Supported in payload metadata. | UI display is minimal. | No parser JavaScript. | `0.1.0` |
-| TOC | Generated headings. | Supported in metadata/rendered output. | Sidebar UI deferred. | Static rendering only. | `0.1.0` |
+| TOC | Generated headings. | Supported with browser sidebar. | Native Zed panel unavailable. | Static sanitized headings only. | `0.1.x` |
+| Workspace link diagnostics | Local link awareness. | Supported passively for Markdown/image links. | Full graph/index deferred. | No remote fetch; path containment only. | `0.1.x` |
+| Browser draft editing | Edit preview content. | Supported with explicit draft/apply. | Not a full editor. | Token-gated, stale checked, backup write. | `0.1.x` |
 | `.crossnote/style.less` | User styles and Less features. | Partial CSS-only subset. | Less evaluation is unsafe. | Scoped selectors only, no imports/URLs/functions. | `0.1.0` |
 | HTML export | Export rendered document. | Supported as sanitized standalone HTML. | Direct Crossnote export deferred. | No browser-provided paths. | `0.1.0` |
-| PDF export | Puppeteer/Chrome export. | Deferred. | Heavy dependency and browser binary support. | Must not run chunks during export. | `0.2.x` |
-| Pandoc export | DOCX, RTF, Beamer, citations. | Deferred. | External binary detection and citation config. | File/path and command execution review needed. | `0.3.x` |
+| PDF export | Puppeteer/Chrome export. | Candidate/deferred. | Heavy dependency and browser binary support. | Must not run chunks during export. | Export candidate |
+| Pandoc export | DOCX, RTF, Beamer, citations. | Candidate/deferred. | External binary detection and citation config. | File/path and command execution review needed. | Export candidate |
 | Code chunks | Execute commands from Markdown. | Deferred; detected and blocked. | Requires explicit trust model and UI. | Arbitrary local command execution. | Security review |
 | Custom parser JS | User parser hooks. | Deferred. | Arbitrary JavaScript execution. | Disabled by safe config. | Security review |
 | `head.html` | User header injection. | Deferred. | Script/style injection risk. | Disabled by safe config. | Security review |
@@ -34,5 +36,7 @@ This matrix tracks Markdown Preview Enhanced compatibility for the Zed external-
 2. Export: PDF, Pandoc, citations, eBook formats.
 3. Diagrams: PlantUML, GraphViz, Kroki, WaveDrom, Vega.
 4. Presentation: Reveal.js browser route.
+
+Feature priority should follow user demand plus security readiness. See [roadmap.md](roadmap.md) for release framing.
 
 Do not start trusted code execution, remote preview, or credential-bearing image workflows without a separate security phase.

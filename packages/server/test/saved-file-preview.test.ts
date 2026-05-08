@@ -75,6 +75,20 @@ describe("renderSavedFile", () => {
     ]);
   });
 
+  it("attaches source state and passive link diagnostics", async () => {
+    const root = await makeTempRoot();
+    const filePath = path.join(root, "note.md");
+    await writeFile(filePath, "# Links\n\n[Missing](missing.md)");
+
+    const result = await renderSavedFile({ workspaceRoot: root, filePath });
+
+    expect(result.sourceText).toContain("[Missing]");
+    expect(result.sourceVersion?.hash).toMatch(/^[a-f0-9]{64}$/);
+    expect(result.linkDiagnostics).toEqual([
+      expect.objectContaining({ status: "missing", target: "missing.md" })
+    ]);
+  });
+
   it("rechecks the file size before render", async () => {
     const { root, filePath } = await writeTempFile("0123456789");
 

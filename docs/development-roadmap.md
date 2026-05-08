@@ -2,7 +2,7 @@
 
 ## Active Plan
 
-The active delivery map is [plans/260507-2257-markdown-preview-enhanced-for-zed/plan.md](../plans/260507-2257-markdown-preview-enhanced-for-zed/plan.md).
+The completed MVP delivery map is [plans/260507-2257-markdown-preview-enhanced-for-zed/plan.md](../plans/260507-2257-markdown-preview-enhanced-for-zed/plan.md). The current maturity roadmap is [plans/260508-1657-secure-extension-maturity-roadmap/plan.md](../plans/260508-1657-secure-extension-maturity-roadmap/plan.md).
 
 ## Current Status
 
@@ -16,6 +16,15 @@ The active delivery map is [plans/260507-2257-markdown-preview-enhanced-for-zed/
 - Phase 7: Complete. Release readiness adds npm package metadata, root license/notices, package smoke automation, Zed dev-extension checklist, and release docs.
 - Phase 8: Complete as roadmap. Feature parity is tracked in a support/deferred matrix; post-MVP runtime features remain demand-driven.
 
+## Maturity Roadmap Status
+
+- Phase 1: CLI diagnostics, setup guidance, stale reuse warnings, browser-open failure guidance, and package smoke coverage are implemented.
+- Phase 2: Docs-team integration guide, public roadmap, package docs inclusion, and security-review framing are implemented.
+- Phase 3: Browser review UX now includes status feedback, left/right contents sidebar, heading fragment copy, and copy/export exclusion for UI chrome.
+- Phase 4: Passive workspace link diagnostics classify local/remote/unsafe targets without fetching or mutating files.
+- Phase 5: Hybrid webview evolution is documented as an adapter boundary over the current render/session/security core.
+- Phase 6: Browser draft editing is explicit, token-gated, stale-checked, backed up, and atomic; it remains off until the user starts a draft.
+
 ## MVP Gates
 
 - Zed launch path uses project tasks unless a richer extension command path is proven.
@@ -24,3 +33,9 @@ The active delivery map is [plans/260507-2257-markdown-preview-enhanced-for-zed/
 - Server distribution starts as an npm workspace/package CLI.
 - Code execution, custom parser JavaScript, public bind, and export-time chunk execution remain disabled by default.
 - Zed registry readiness requires local gates, package smoke, accepted license, and dev-extension validation before submission.
+
+## Risk Gates
+
+- Code execution, custom parser JavaScript, public bind, remote preview, and credential workflows remain excluded until separate security review.
+- Browser editing must stay explicit. No background autosave, browser-supplied destination paths, or multi-file mutation.
+- Future native Zed surfaces must reuse the same containment, token/session, sanitization, and write-safety invariants.

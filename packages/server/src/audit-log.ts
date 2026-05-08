@@ -5,6 +5,7 @@ export type SecurityEvent = {
     | "invalid_preview_token"
     | "invalid_websocket_token"
     | "invalid_export_token"
+    | "invalid_draft_token"
     | "blocked_code_chunk";
   sessionId?: string;
   workspaceRoot?: string;

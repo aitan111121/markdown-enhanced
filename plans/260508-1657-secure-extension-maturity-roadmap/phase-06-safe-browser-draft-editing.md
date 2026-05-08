@@ -11,7 +11,7 @@
 ## Overview
 
 - Priority: P2
-- Status: Pending
+- Status: Complete
 - Goal: explore direct browser editing as a safe draft workflow, not silent source-file mutation.
 
 ## Key Insights
@@ -69,13 +69,13 @@ POST /api/source/apply-draft -> session token -> path containment -> stale check
 
 ## Todo List
 
-- [ ] Design explicit edit-mode UX.
-- [ ] Implement draft-only browser editing.
-- [ ] Add safe draft render path.
-- [ ] Add diff/summary before apply.
-- [ ] Add gated apply endpoint only after review.
-- [ ] Add stale-check, atomic-write, and rollback tests.
-- [ ] Document editing limitations and recovery.
+- [x] Design explicit edit-mode UX.
+- [x] Implement draft-only browser editing.
+- [x] Add safe draft render path.
+- [x] Add diff/summary before apply.
+- [x] Add gated apply endpoint only after review.
+- [x] Add stale-check, atomic-write, and rollback tests.
+- [x] Document editing limitations and recovery.
 
 ## Success Criteria
 

@@ -10,6 +10,10 @@ body {
   color: CanvasText;
 }
 
+button {
+  font: inherit;
+}
+
 .preview-toolbar {
   align-items: center;
   border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent);
@@ -80,6 +84,126 @@ body {
   color: #ef4444;
 }
 
+.preview-workspace {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 880px);
+  justify-content: center;
+  gap: 24px;
+  padding: 0 20px;
+}
+
+body[data-toc-position="right"] .preview-workspace {
+  grid-template-columns: minmax(0, 880px) minmax(180px, 240px);
+}
+
+body[data-toc-position="right"] .preview-toc {
+  order: 2;
+}
+
+body[data-toc-position="right"] .preview-root {
+  order: 1;
+}
+
+body[data-toc-collapsed="true"] .preview-workspace {
+  grid-template-columns: minmax(0, 880px);
+}
+
+body[data-toc-collapsed="true"] .preview-toc {
+  display: none;
+}
+
+.preview-toc {
+  align-self: start;
+  border-right: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+  max-height: calc(100vh - 72px);
+  overflow: auto;
+  padding: 24px 12px 24px 0;
+  position: sticky;
+  top: 56px;
+}
+
+body[data-toc-position="right"] .preview-toc {
+  border-left: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+  border-right: 0;
+  padding-left: 12px;
+  padding-right: 0;
+}
+
+.preview-toc-header,
+.draft-editor-header {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.preview-toc-controls,
+.draft-editor-actions {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+
+.preview-toc-controls button,
+.preview-toc-list button {
+  background: transparent;
+  border: 0;
+  color: CanvasText;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 6px;
+}
+
+.preview-toc-controls button:hover,
+.preview-toc-list button:hover {
+  background: color-mix(in srgb, CanvasText 8%, transparent);
+  border-radius: 4px;
+}
+
+.preview-toc-empty,
+.draft-editor-summary {
+  color: color-mix(in srgb, CanvasText 68%, transparent);
+  font-size: 13px;
+}
+
+.preview-toc-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.preview-toc-list li {
+  margin: 2px 0;
+  padding-left: calc(var(--toc-level, 0) * 12px);
+}
+
+.preview-toc-list button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.draft-editor-panel {
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
+  padding: 16px 20px;
+}
+
+.draft-editor-textarea {
+  background: color-mix(in srgb, CanvasText 4%, Canvas);
+  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+  border-radius: 6px;
+  box-sizing: border-box;
+  color: CanvasText;
+  display: block;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, Monaco, monospace;
+  font-size: 14px;
+  margin-top: 12px;
+  min-height: 220px;
+  padding: 12px;
+  resize: vertical;
+  width: 100%;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -93,6 +217,7 @@ body {
   margin: 0 auto;
   max-width: 880px;
   padding: 32px 24px 64px;
+  width: 100%;
 }
 
 .preview-error-banner {
@@ -183,6 +308,28 @@ body {
   line-height: 1.25;
   margin-bottom: 16px;
   margin-top: 24px;
+  scroll-margin-top: 72px;
+}
+
+.heading-anchor-button {
+  background: transparent;
+  border: 0;
+  color: color-mix(in srgb, CanvasText 42%, transparent);
+  cursor: pointer;
+  font-size: 0.75em;
+  margin-left: 8px;
+  opacity: 0;
+  padding: 2px 4px;
+}
+
+.markdown-preview h1:hover .heading-anchor-button,
+.markdown-preview h2:hover .heading-anchor-button,
+.markdown-preview h3:hover .heading-anchor-button,
+.markdown-preview h4:hover .heading-anchor-button,
+.markdown-preview h5:hover .heading-anchor-button,
+.markdown-preview h6:hover .heading-anchor-button,
+.heading-anchor-button:focus {
+  opacity: 1;
 }
 
 .markdown-preview h1 {
@@ -238,4 +385,30 @@ body {
   border: none;
   border-top: 1px solid color-mix(in srgb, CanvasText 16%, transparent);
   margin: 32px 0;
+}
+
+@media (max-width: 860px) {
+  .preview-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    height: auto;
+    padding: 10px 16px;
+  }
+
+  .toolbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .preview-workspace,
+  body[data-toc-position="right"] .preview-workspace {
+    display: block;
+    padding: 0 12px;
+  }
+
+  .preview-toc {
+    border: 0;
+    max-height: 180px;
+    padding: 12px 0;
+    position: static;
+  }
 }

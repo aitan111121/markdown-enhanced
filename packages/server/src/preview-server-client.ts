@@ -11,9 +11,15 @@ export type ExistingPreviewServerResult = {
   url: string;
 };
 
+export type PreviewServerReuseDiagnostic = {
+  code: "W_REUSE_STALE";
+  message: string;
+};
+
 export async function createPreviewInExistingWorkspaceServer(input: {
   workspacePath: string;
   filePath: string;
+  onDiagnostic?: (diagnostic: PreviewServerReuseDiagnostic) => void;
 }): Promise<ExistingPreviewServerResult | undefined> {
   const resolved = await resolveWorkspaceFile(input);
   const state = await readWorkspaceServerState(resolved.workspaceRoot);
@@ -29,8 +35,12 @@ export async function createPreviewInExistingWorkspaceServer(input: {
     );
 
     return { port: state.port, url: response.url };
-  } catch {
+  } catch (error) {
     await removeWorkspaceServerState(resolved.workspaceRoot, state.controlToken);
+    input.onDiagnostic?.({
+      code: "W_REUSE_STALE",
+      message: `Cleared stale preview server state and will start a fresh server (${error instanceof Error ? error.message : "unknown error"})`
+    });
     return undefined;
   }
 }
